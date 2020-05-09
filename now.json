@@ -1,0 +1,13 @@
+{
+    "version": 2,
+    "build": {
+        "env": {
+            "BUILDING_FOR_NOW": "true"
+        }
+    },
+    "builds": [
+        { "src": "vendors/package.json", "use": "@now/next" },
+        { "src": "buyers/package.json", "use": "@now/next" },
+        { "src": "companies/package.json", "use": "@now/next" }
+    ]
+}

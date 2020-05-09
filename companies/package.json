@@ -1,0 +1,31 @@
+{
+    "name": "companies",
+    "version": "0.1.0",
+    "private": true,
+    "scripts": {
+        "dev": "next dev -p 4000",
+        "build": "next build",
+        "start": "next start"
+    },
+    "dependencies": {
+        "@ant-design/icons": "^4.1.0",
+        "@apollo/react-hooks": "^3.1.5",
+        "antd": "^4.2.0",
+        "apollo-cache-inmemory": "^1.6.5",
+        "apollo-client": "^2.6.8",
+        "apollo-link": "^1.2.14",
+        "apollo-link-context": "^1.0.20",
+        "apollo-link-error": "^1.1.13",
+        "apollo-link-http": "^1.5.17",
+        "apollo-link-retry": "^2.2.16",
+        "graphql": "^15.0.0",
+        "graphql-tag": "^2.10.3",
+        "js-cookie": "^2.2.1",
+        "next": "9.3.6",
+        "node-fetch": "^2.6.0",
+        "react": "16.13.1",
+        "react-apollo": "^3.1.5",
+        "react-dom": "16.13.1",
+        "uuid": "^8.0.0"
+    }
+}
