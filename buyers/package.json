@@ -3,7 +3,7 @@
     "version": "0.1.0",
     "private": true,
     "scripts": {
-        "dev": "next dev -p 5000",
+        "dev": "next dev -p 8000",
         "build": "next build",
         "start": "next start"
     },
@@ -19,6 +19,7 @@
         "apollo-link-retry": "^2.2.16",
         "graphql": "^15.0.0",
         "graphql-tag": "^2.10.3",
+        "js-cookie": "^2.2.1",
         "next": "9.3.6",
         "node-fetch": "^2.6.0",
         "react": "16.13.1",

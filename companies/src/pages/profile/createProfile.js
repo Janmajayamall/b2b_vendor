@@ -64,6 +64,8 @@ class CreateProfile extends React.Component {
             if (data.createCompanyProfile === true) {
                 console.log("ho gaya")
             }
+
+            //route
         } catch (e) {
             console.log(e)
             this.setState({

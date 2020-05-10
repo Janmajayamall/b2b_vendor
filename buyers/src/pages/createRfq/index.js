@@ -13,10 +13,10 @@ const defaultRFQ = {
     productName: undefined,
     productDescription: `productDescription:::${new Date()}`,
     productParameters: {},
-    quantity: 0,
+    quantity: 0.0,
     unit: `unit:::${new Date()}`,
     termsAndConditions: `termsAndConditions:::${new Date()}`,
-    deliveryDays: 0,
+    deliveryDays: 0.0,
     id: undefined
 }
 
@@ -103,7 +103,7 @@ class CreateRfq extends React.PureComponent {
 
         //get final rfq
         const finalRfq = this.rfqRefine()
-
+        console.log(finalRfq, "sa")
         //create item orders request
         try {
             const res = await this.props.client.mutate({
@@ -125,7 +125,8 @@ class CreateRfq extends React.PureComponent {
         this.state.rfqTable.forEach((item) => {
             const newItem = {
                 ...item,
-                quantity: String(item.quantity)
+                quantity: String(item.quantity),
+                deliveryDays: String(item.deliveryDays)
             }
 
             //deleting unnecessary keys

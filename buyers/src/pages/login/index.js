@@ -1,9 +1,9 @@
 import React from "react"
 import { Button, Form, Input, Alert } from "antd"
 import { withRouter } from "next/router"
-import { LOGIN_COMPANY } from "../../graphql/apolloQueries/index"
+import { LOGIN_BUYER } from "../../graphql/apolloQueries/index"
 import { withApollo } from "react-apollo"
-import { constants, setJwt } from "../../utils"
+import { constants, setJwt } from "./../../utils/index"
 
 const defaultErrorState = {
     error: false,
@@ -16,58 +16,72 @@ class Login extends React.Component {
         super(props)
 
         this.state = {
-            loading: false,
+            submitLoading: false,
             error: defaultErrorState
         }
     }
 
     login = async (values) => {
-        //if loading is true then return
-        if (this.state.loading === true) {
+        //if submitLoading is true then return
+        if (this.state.submitLoading === true) {
             return
         }
 
-        //set loading to true
+        //set submitLoading to true
         this.setState({
-            loading: true,
+            submitLoading: true,
             error: defaultErrorState
         })
 
         try {
             //create request
             const { data } = await this.props.client.mutate({
-                mutation: LOGIN_COMPANY,
+                mutation: LOGIN_BUYER,
                 variables: values
             })
-            let loginCompany = data.loginCompany
-
+            let loginBuyer = data.loginBuyer
+            console.log(loginBuyer)
             //check for errors
-            if (loginCompany.error !== constants.errorCodes.noError) {
+            if (loginBuyer.error !== constants.errorCodes.noError) {
                 //check error type
-                if (loginCompany.error === constants.errorCodes.emailDoesNotExists) {
+                if (loginBuyer.error === constants.errorCodes.emailDoesNotExists) {
                     this.setState({
                         error: {
                             error: true,
                             text: "Error User",
                             description: "User with EmailID does not exists"
                         },
-                        loading: false
+                        submitLoading: false
+                    })
+                    return
+                }
+
+                if (loginBuyer.error === constants.errorCodes.invalidCreds) {
+                    this.setState({
+                        error: {
+                            error: true,
+                            text: "Error User",
+                            description: "Invalid Credentials!"
+                        },
+                        submitLoading: false
                     })
                     return
                 }
 
                 //else throw error because it is unidentified
-                throw new Error(`Unrecognized error response code: ${loginCompany.error}`)
+                throw new Error(`Unrecognized error response code: ${loginBuyer.error}`)
             }
 
             //set jwt
-            setJwt(loginCompany.jwt)
+            setJwt(loginBuyer.jwt)
 
             //check if profile exists & route accordingly
-            if (loginCompany.profileCreated === false) {
+            if (loginBuyer.profileCreated === false) {
+                console.log("stuck here")
                 //route to create Profile page
             } else {
                 //route to home page
+                this.props.router.push("/createRfq")
             }
         } catch (e) {
             console.log("company login error: ", e)
@@ -77,7 +91,7 @@ class Login extends React.Component {
                     text: "Error. Sorry.",
                     description: "Something went wrong! Please try again later."
                 },
-                loading: false
+                submitLoading: false
             })
         }
     }
@@ -130,17 +144,8 @@ class Login extends React.Component {
                         </Form.Item>
 
                         <Form.Item>
-                            <Button type="primary" htmlType="submit">
+                            <Button loading={this.state.submitLoading} type="primary" htmlType="submit">
                                 Login
-                            </Button>
-                        </Form.Item>
-                        <Form.Item>
-                            <Button
-                                onClick={() => {
-                                    this.props.router.push("/register")
-                                }}
-                            >
-                                Register
                             </Button>
                         </Form.Item>
                     </Form>

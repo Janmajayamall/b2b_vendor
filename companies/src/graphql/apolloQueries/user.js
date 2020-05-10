@@ -40,3 +40,13 @@ export const CREATE_COMPANY_PROFILE = gql`
         )
     }
 `
+
+export const LOGIN_COMPANY = gql`
+    mutation loginCompany($emailId: String!, $password: String!) {
+        loginCompany(userInput: { emailId: $emailId, password: $password }) {
+            jwt
+            profileCreated
+            error
+        }
+    }
+`

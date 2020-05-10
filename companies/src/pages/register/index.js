@@ -95,7 +95,7 @@ class Register extends React.Component {
             <div className="initial-page">
                 <div className="register-form">
                     {/* rendering Error */}
-                    {this.state.error.error ? this.renderError() : undefined}
+                    {this.state.error.error === true ? this.renderError() : undefined}
 
                     <Form
                         style={{ width: "100%" }}

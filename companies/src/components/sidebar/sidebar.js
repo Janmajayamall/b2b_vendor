@@ -10,12 +10,6 @@ class SideBar extends React.PureComponent {
         }
     }
 
-    toggleCollapsed = () => {
-        this.setState({
-            collapsed: !this.state.collapsed
-        })
-    }
-
     render() {
         return (
             <div className="sidebar">
@@ -38,7 +32,7 @@ class SideBar extends React.PureComponent {
                     </Menu.Item>
                     <Menu.Item
                         onClick={() => {
-                            this.props.router.push("/buyers")
+                            this.props.router.push("/buyerAccounts")
                         }}
                         key="2"
                     >
@@ -46,9 +40,9 @@ class SideBar extends React.PureComponent {
                     </Menu.Item>
                     <Menu.Item
                         onClick={() => {
-                            this.props.router.push("/vendors")
+                            this.props.router.push("/vendorAccounts")
                         }}
-                        key="2"
+                        key="3"
                     >
                         View Sellers
                     </Menu.Item>
