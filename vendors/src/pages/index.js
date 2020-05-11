@@ -13,7 +13,7 @@ class Initial extends React.PureComponent {
     }
 
     checkUserAuthentication = () => {
-        Router.push("/createRfq")
+        Router.push("/login")
     }
 
     render() {

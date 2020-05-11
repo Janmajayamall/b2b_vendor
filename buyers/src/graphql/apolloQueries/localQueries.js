@@ -9,10 +9,11 @@ export const ADD_TEMP_ITEM = gql`
         $productName: String!
         $productDescription: String!
         $productParameters: String!
-        $quantity: Number!
+        $quantity: Float!
         $unit: String!
         $termsAndConditions: String!
         $id: ID!
+        $deliveryDays: Float!
     ) {
         addTempItem(
             itemInput: {
@@ -26,6 +27,7 @@ export const ADD_TEMP_ITEM = gql`
                 unit: $unit
                 termsAndConditions: $termsAndConditions
                 id: $id
+                deliveryDays: $deliveryDays
             }
         ) @client
     }
@@ -45,6 +47,7 @@ export const GET_TEMP_RFQ = gql`
             unit
             termsAndConditions
             id
+            deliveryDays
         }
     }
 `

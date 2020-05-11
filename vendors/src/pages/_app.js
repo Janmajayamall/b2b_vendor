@@ -18,7 +18,7 @@ function App({ Component, pageProps }) {
             </Head>
 
             <body>
-                {router.pathname === "/" ? (
+                {router.pathname === "/login" ? (
                     <div className="main-page">
                         <Component {...pageProps} />
                     </div>

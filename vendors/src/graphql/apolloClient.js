@@ -7,24 +7,25 @@ import { RetryLink } from "apollo-link-retry"
 import fetch from "node-fetch"
 import { GET_TEMP_RFQ } from "./apolloQueries/index"
 import resolvers from "./resolvers"
+import { getJwt } from "./../utils"
+import { setContext } from "apollo-link-context"
 global.fetch = fetch
 
 // cached storage for the user token
 let token = null
 
-// const withToken = setContext(async() => {
-//   // if you have a cached value, return it immediately
-//   if(!token){
-//     token = await get_jwt_asyncstorage()
-//     }
+const withToken = setContext(async () => {
+    // if you have a cached value, return it immediately
+    if (!token) {
+        token = getJwt()
+    }
 
-//   return {
-//     headers: {
-//       authorization: token,
-//     },
-//   }
-
-// })
+    return {
+        headers: {
+            authorization: token
+        }
+    }
+})
 
 //for resetting token to null after logout
 // export const reset_token = () => {
@@ -87,7 +88,7 @@ const loggerLink = new ApolloLink((operation, forward) => {
 const client = new ApolloClient({
     link: ApolloLink.from([
         loggerLink,
-        // with_token,
+        withToken,
         // retryLink,
         errorLink,
         new HttpLink({

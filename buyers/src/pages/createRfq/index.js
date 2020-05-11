@@ -56,6 +56,10 @@ const columns = [
     {
         title: "Terms & Conditions",
         dataIndex: "termsAndConditions"
+    },
+    {
+        title: "Delivery Days",
+        dataIndex: "deliveryDays"
     }
 ]
 
@@ -123,10 +127,9 @@ class CreateRfq extends React.PureComponent {
     rfqRefine = () => {
         const finalRfq = []
         this.state.rfqTable.forEach((item) => {
+            console.log(item, "Mi")
             const newItem = {
-                ...item,
-                quantity: String(item.quantity),
-                deliveryDays: String(item.deliveryDays)
+                ...item
             }
 
             //deleting unnecessary keys

@@ -8,6 +8,7 @@ import fetch from "node-fetch"
 import { GET_TEMP_RFQ } from "./apolloQueries/index"
 import resolvers from "./resolvers"
 import { getJwt } from "./../utils"
+import { setContext } from "apollo-link-context"
 global.fetch = fetch
 
 // cached storage for the user token
@@ -49,10 +50,7 @@ const errorLink = onError(({ graphQLErrors, networkError }) => {
                 )
             }
             if (extensions.code === "UNAUTHENTICATED" && path[0] !== "login_user") {
-                if (!true) {
-                    bugsnag.notify(new Error(JSON.stringify(extensions)))
-                }
-                logout_unauthenticated_err()
+                // logout_unauthenticated_err()
             }
         })
     }
@@ -87,7 +85,7 @@ const loggerLink = new ApolloLink((operation, forward) => {
 const client = new ApolloClient({
     link: ApolloLink.from([
         loggerLink,
-        // with_token,
+        withToken,
         // retryLink,
         errorLink,
         new HttpLink({

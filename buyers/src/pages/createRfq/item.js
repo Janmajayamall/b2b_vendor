@@ -12,18 +12,17 @@ class Item extends React.Component {
         this.state = {
             tempItem: this.props.router.query
         }
-        console.log(this.props.router.query)
     }
 
     addItem = (values) => {
-        //checking productParametersNames & productParametersValues are in equal length
-        if (values.productParametersNames.length !== values.productParametersValues.length) {
-            return
-        }
-
         //converting product parameters array to productParameters object
         const productParameters = {}
         if (values.productParametersNames) {
+            //checking productParametersNames & productParametersValues are in equal length
+            if (values.productParametersNames.length !== values.productParametersValues.length) {
+                return
+            }
+
             values.productParametersNames.forEach((element, index) => {
                 productParameters[element] = values.productParametersValues[index]
             })
@@ -37,10 +36,12 @@ class Item extends React.Component {
         //getting query from router
         let item = {
             ...this.state.tempItem,
-            ...values
-        }
+            ...values,
 
-        console.log(item)
+            //parsing numerical values to float
+            quantity: parseFloat(values.quantity),
+            deliveryDays: parseFloat(values.deliveryDays)
+        }
 
         this.props.client.mutate({
             mutation: ADD_TEMP_ITEM,
