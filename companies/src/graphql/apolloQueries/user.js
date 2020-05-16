@@ -16,6 +16,7 @@ export const CREATE_COMPANY_PROFILE = gql`
         $name: String!
         $country: String!
         $city: String!
+        $state: String!
         $address: String!
         $description: String!
         $locationCoordinates: locationCoordinates!
@@ -29,6 +30,7 @@ export const CREATE_COMPANY_PROFILE = gql`
                 name: $name
                 country: $country
                 city: $city
+                state: $state
                 address: $address
                 description: $description
                 locationCoordinates: $locationCoordinates
@@ -37,7 +39,9 @@ export const CREATE_COMPANY_PROFILE = gql`
                 website: $website
                 linkedIn: $linkedIn
             }
-        )
+        ) {
+            error
+        }
     }
 `
 

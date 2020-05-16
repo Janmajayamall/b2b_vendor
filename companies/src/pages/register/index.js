@@ -29,7 +29,8 @@ class Register extends React.Component {
 
         //set screen state to loading
         this.setState({
-            loading: true
+            loading: true,
+            error: defaultErrorState
         })
 
         //registration of the user
@@ -52,7 +53,7 @@ class Register extends React.Component {
                     loading: false
                 })
             }
-
+            console.log(registerCompany)
             //setting jwt
             setJwt(registerCompany.jwt)
 

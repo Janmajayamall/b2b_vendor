@@ -1,12 +1,15 @@
 import React from "react"
-import { Table, Button, Form, Input, InputNumber, Card } from "antd"
-import Router, { useRouter, withRouter } from "next/router"
+import { Table, Button, Form, Input, InputNumber, Card, Alert } from "antd"
+import { withRouter } from "next/router"
 import { CREATE_COMPANY_PROFILE } from "../../graphql/apolloQueries/index"
 import { withApollo } from "react-apollo"
+import { constants } from "../../utils"
 
 const createProfileDefaultValues = {
+    //TODO: remove in prod
     name: `name:::${new Date()}`,
     country: `country:::${new Date()}`,
+    state: `state:::${new Date()}`,
     city: `city:::${new Date()}`,
     address: `address:::${new Date()}`,
     description: `description:::${new Date()}`,
@@ -20,12 +23,19 @@ const createProfileDefaultValues = {
     linkedIn: `linkedIn:::${new Date()}`
 }
 
+const defaultErrorState = {
+    error: false,
+    text: "",
+    description: ""
+}
+
 class CreateProfile extends React.Component {
     constructor(props) {
         super(props)
 
         this.state = {
-            loading: false
+            loading: false,
+            error: defaultErrorState
         }
     }
 
@@ -37,7 +47,8 @@ class CreateProfile extends React.Component {
 
         //set loading to true
         this.setState({
-            loading: true
+            loading: true,
+            error: defaultErrorState
         })
 
         //TODO: validate, if validation already not done
@@ -54,15 +65,30 @@ class CreateProfile extends React.Component {
             //create profile req
             const { data } = await this.props.client.mutate({
                 mutation: CREATE_COMPANY_PROFILE,
-                variables: variables,
-                fetchPolicy: "no-cache"
+                variables: variables
             })
 
+            const { createCompanyProfile } = data
             console.log(data, "data response")
 
-            //reroute to the home page
-            if (data.createCompanyProfile === true) {
-                console.log("ho gaya")
+            if (createCompanyProfile.error === constants.errorCodes.profileAlreadyCreated) {
+                this.setState({
+                    loading: false,
+                    error: {
+                        error: true,
+                        text: "ERROR PROFILE EXISTS",
+                        description:
+                            "Profile for the account already exists, please use edit profile for changing updating profile"
+                    }
+                })
+                setTimeout(() => {
+                    this.props.router.push("/")
+                }, 5000)
+            } else {
+                this.setState({
+                    loading: false
+                })
+                console.log("Profile created")
             }
 
             //route
@@ -74,11 +100,28 @@ class CreateProfile extends React.Component {
         }
     }
 
+    renderError = () => {
+        return (
+            <Alert
+                message={this.state.error.text}
+                description={this.state.error.description}
+                type="error"
+                closable
+                onClose={() => {
+                    this.setState({
+                        error: defaultErrorState
+                    })
+                }}
+            />
+        )
+    }
+
     render() {
         return (
             <div className="initial-page">
                 <div className="create-profile-list">
                     <Card title="Create Company Profile" bordered={false}>
+                        {this.state.error.error === true ? this.renderError() : undefined}
                         <Form
                             layout="vertical"
                             initialValues={createProfileDefaultValues}
@@ -111,6 +154,18 @@ class CreateProfile extends React.Component {
                             <Form.Item
                                 label="City"
                                 name="city"
+                                rules={[
+                                    {
+                                        required: false
+                                    }
+                                ]}
+                            >
+                                <Input />
+                            </Form.Item>
+
+                            <Form.Item
+                                label="State"
+                                name="state"
                                 rules={[
                                     {
                                         required: false
