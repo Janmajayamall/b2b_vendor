@@ -1,5 +1,5 @@
 import React from "react"
-import { Alert, Card } from "antd"
+import { Alert, Card, List } from "antd"
 import { withRouter } from "next/router"
 import { GET_INCOMING_VENDOR_ORDERS } from "../../graphql/apolloQueries/index"
 import { withApollo } from "react-apollo"
@@ -30,10 +30,14 @@ class ExploreItemOrders extends React.Component {
                 query: GET_INCOMING_VENDOR_ORDERS,
                 fetchPolicy: "no-cache"
             })
-            console.log(data)
+            this.setState({
+                itemOrders: data.getIncomingVendorOrders,
+                loading: false
+            })
         } catch (e) {
             //error in getting getIncomingItemOrder
             console.log("error in itemOrder: ", e)
+            this.setState({ loading: false })
         }
     }
 
@@ -62,7 +66,9 @@ class ExploreItemOrders extends React.Component {
                         height: "100%",
                         width: "100%"
                     }}
-                ></Card>
+                >
+                    <List></List>
+                </Card>
                 <style jsx>{`
                     .initial-page {
                         display: flex;
