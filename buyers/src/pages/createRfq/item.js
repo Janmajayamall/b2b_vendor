@@ -1,6 +1,6 @@
 import React from "react"
 import { Table, Button, Form, Input, InputNumber } from "antd"
-import Router, { useRouter, withRouter } from "next/router"
+import { withRouter } from "next/router"
 import { ADD_TEMP_ITEM } from "../../graphql/apolloQueries/index"
 import { withApollo } from "react-apollo"
 import { PlusOutlined, MinusOutlined } from "@ant-design/icons"
@@ -39,8 +39,7 @@ class Item extends React.Component {
             ...values,
 
             //parsing numerical values to float
-            quantity: parseFloat(values.quantity),
-            deliveryDays: parseFloat(values.deliveryDays)
+            quantity: parseFloat(values.quantity)
         }
 
         this.props.client.mutate({
@@ -269,11 +268,11 @@ class Item extends React.Component {
                             rules={[
                                 {
                                     required: true,
-                                    message: "Please enter the delivery days of Item"
+                                    message: "Please enter when do you expect the item to be delivered"
                                 }
                             ]}
                         >
-                            <InputNumber />
+                            <Input />
                         </Form.Item>
 
                         <Form.Item>

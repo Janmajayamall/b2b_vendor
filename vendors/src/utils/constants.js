@@ -12,6 +12,7 @@ export const constants = {
         emailDoesNotExists: "2",
         noError: "0",
         invalidCreds: "3",
+        recordNotFound: "5",
         unknownError: "1000"
     }
 }

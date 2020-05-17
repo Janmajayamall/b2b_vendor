@@ -1,8 +1,9 @@
 import React from "react"
-import { Alert, Card, List } from "antd"
+import { Alert, Card, List, Button, Form, Descriptions } from "antd"
 import { withRouter } from "next/router"
 import { GET_INCOMING_VENDOR_ORDERS } from "../../graphql/apolloQueries/index"
 import { withApollo } from "react-apollo"
+import { StarOutlined } from "@ant-design/icons"
 
 const defaultErrorState = {
     error: false,
@@ -16,7 +17,8 @@ class ExploreItemOrders extends React.Component {
 
         this.state = {
             loading: false,
-            error: defaultErrorState
+            error: defaultErrorState,
+            itemOrders: []
         }
     }
 
@@ -30,6 +32,7 @@ class ExploreItemOrders extends React.Component {
                 query: GET_INCOMING_VENDOR_ORDERS,
                 fetchPolicy: "no-cache"
             })
+            console.log(data.getIncomingVendorOrders)
             this.setState({
                 itemOrders: data.getIncomingVendorOrders,
                 loading: false
@@ -57,6 +60,39 @@ class ExploreItemOrders extends React.Component {
         )
     }
 
+    routeOrderDetails = (orderId) => {
+        this.props.router.push({
+            pathname: "/exploreItemOrders/itemOrderDetails",
+            query: {
+                orderId: orderId
+            }
+        })
+    }
+
+    renderListItems = (item) => {
+        return (
+            <List.Item
+                actions={[
+                    <Button
+                        onClick={() => {
+                            this.routeOrderDetails(item.orderId)
+                        }}
+                        type="primary"
+                    >
+                        {" "}
+                        Detail{" "}
+                    </Button>
+                ]}
+            >
+                <div>
+                    <Descriptions title={item.companyName}>
+                        <Descriptions.Item label={"Country"}>{item.companyCountry}</Descriptions.Item>
+                    </Descriptions>
+                </div>
+            </List.Item>
+        )
+    }
+
     render() {
         return (
             <div className="initial-page">
@@ -67,12 +103,11 @@ class ExploreItemOrders extends React.Component {
                         width: "100%"
                     }}
                 >
-                    <List></List>
+                    <List itemLayout="vertical" dataSource={this.state.itemOrders} renderItem={this.renderListItems} />
                 </Card>
                 <style jsx>{`
                     .initial-page {
                         display: flex;
-                        height: 100%;
                         width: 100%;
                         flex-direction: column;
                         justify-content: center;
