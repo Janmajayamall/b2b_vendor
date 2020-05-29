@@ -31,3 +31,27 @@ export const BUYER_GET_ACTIVE_ITEM_ORDERS = gql`
         }
     }
 `
+
+export const BUYER_GET_ITEM_DETAILS = gql`
+    query buyerGetItemDetails($orderId: ID!) {
+        buyerGetItemDetails(orderId: $orderId) {
+            _id
+            buyerId
+            buyerName
+            buyerRfqId
+            buyerPrId
+            buyerItemId
+            productName
+            productDescription
+            productParameters
+            quantity
+            unit
+            termsAndConditions
+            deliveryDays
+            buyerGroupId
+            createdAt
+            lastModified
+            status
+        }
+    }
+`

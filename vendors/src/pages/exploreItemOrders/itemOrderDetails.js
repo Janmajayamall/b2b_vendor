@@ -156,7 +156,6 @@ class ItemOrderDetails extends React.Component {
             return
         }
 
-        console.log(parameters)
         return (
             <Descriptions.Item label="Product Parameters">
                 {Object.keys(parameters).map((parameter) => {

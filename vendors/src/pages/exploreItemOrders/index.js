@@ -35,12 +35,20 @@ class ExploreItemOrders extends React.Component {
             console.log(data.getIncomingVendorOrders)
             this.setState({
                 itemOrders: data.getIncomingVendorOrders,
-                loading: false
+                loading: false,
+                error: defaultErrorState
             })
         } catch (e) {
             //error in getting getIncomingItemOrder
             console.log("error in itemOrder: ", e)
-            this.setState({ loading: false })
+            this.setState({
+                loading: false,
+                error: {
+                    error: true,
+                    text: "Sorry!",
+                    description: "Something went wrong. Please try again later!"
+                }
+            })
         }
     }
 
