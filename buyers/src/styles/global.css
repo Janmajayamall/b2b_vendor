@@ -13,3 +13,9 @@ body {
 * {
     box-sizing: border-box;
 }
+
+.spinner-div {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
