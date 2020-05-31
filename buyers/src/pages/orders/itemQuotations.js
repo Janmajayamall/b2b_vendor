@@ -1,7 +1,12 @@
 import React from "react"
 import { Table, Alert, Card, Button, Divider, Select, Typography, Checkbox, Spin } from "antd"
 import { withRouter } from "next/router"
-import { BUYER_GET_ITEM_DETAILS, GET_ITEM_ORDER_QUOTATIONS } from "../../graphql/apolloQueries/index"
+import {
+    BUYER_GET_ITEM_DETAILS,
+    GET_ITEM_ORDER_QUOTATIONS,
+    GET_ITEM_ORDER_QUOTATIONS_UNDER_REVIEW,
+    GET_ITEM_ORDER_ACCEPTED_QUOTATION
+} from "../../graphql/apolloQueries/index"
 import { withApollo } from "react-apollo"
 import Link from "next/link"
 import { ReloadOutlined, LoadingOutlined } from "@ant-design/icons"
@@ -26,6 +31,10 @@ const defaultSortValues = {
 }
 
 const productColumns = [
+    {
+        title: "Order ID",
+        dataIndex: "_id"
+    },
     {
         title: "RFQ ID",
         dataIndex: "buyerRfqId"
@@ -130,9 +139,13 @@ class ItemQuotations extends React.Component {
 
             itemDetailsLoading: true,
             quotationsLoading: true,
+            quotationsUnderReviewLoading: true,
+            quotationAcceptedLoading: true,
 
             itemDetails: [],
             itemQuotations: [],
+            itemQuotationsUnderReview: [],
+            itemQuotationAccepted: [],
             orderId: this.props.query.orderId,
 
             // filter options
@@ -149,6 +162,8 @@ class ItemQuotations extends React.Component {
     componentDidMount() {
         this.getItemOrderDetails()
         this.getItemOrderQuotations({}, {})
+        this.getItemOrderQuotationsUnderReview()
+        this.getItemOrderAcceptedQuotation()
     }
 
     getItemOrderDetails = async () => {
@@ -267,6 +282,105 @@ class ItemQuotations extends React.Component {
         }
     }
 
+    getItemOrderQuotationsUnderReview = async () => {
+        const orderId = this.state.orderId
+
+        if (orderId == undefined) {
+            this.setState({
+                error: {
+                    error: true,
+                    text: "Error Item Order ID!",
+                    description: "Please refresh the page."
+                },
+                quotationsUnderReviewLoading: false
+            })
+            return
+        }
+
+        //set quotationsUnderReviewLoading to true
+        this.setState({
+            quotationsUnderReviewLoading: true,
+            error: defaultErrorState
+        })
+
+        try {
+            const { data } = await this.props.client.query({
+                query: GET_ITEM_ORDER_QUOTATIONS_UNDER_REVIEW,
+                variables: {
+                    orderId: orderId
+                },
+                fetchPolicy: "no-cache"
+            })
+            const { getItemOrderQuotationsUnderReview } = data
+            console.log(getItemOrderQuotationsUnderReview, "getItemOrderQuotationsUnderReview")
+            this.setState({
+                itemQuotationsUnderReview: getItemOrderQuotationsUnderReview,
+                error: defaultErrorState,
+                quotationsUnderReviewLoading: false
+            })
+        } catch (e) {
+            this.setState({
+                quotationsUnderReviewLoading: false,
+                error: {
+                    error: true,
+                    text: "Sorry!",
+                    description: "Something went wrong. Please try again later!"
+                }
+            })
+        }
+    }
+
+    getItemOrderAcceptedQuotation = async () => {
+        const orderId = this.state.orderId
+
+        if (orderId == undefined) {
+            this.setState({
+                error: {
+                    error: true,
+                    text: "Error Item Order ID!",
+                    description: "Please refresh the page."
+                },
+                quotationAcceptedLoading: false
+            })
+            return
+        }
+
+        //set quotationAcceptedLoading to true
+        this.setState({
+            quotationAcceptedLoading: true,
+            error: defaultErrorState
+        })
+
+        try {
+            const { data } = await this.props.client.query({
+                query: GET_ITEM_ORDER_ACCEPTED_QUOTATION,
+                variables: {
+                    orderId: orderId
+                }
+            })
+            const { getItemOrderAcceptedQuotation } = data
+            console.log(getItemOrderAcceptedQuotation, "getItemOrderAcceptedQuotation")
+            const acceptedQuotation = []
+            if (getItemOrderAcceptedQuotation != undefined) {
+                acceptedQuotation = [getItemOrderAcceptedQuotation]
+            }
+            this.setState({
+                itemQuotationAccepted: acceptedQuotation,
+                error: defaultErrorState,
+                quotationAcceptedLoading: false
+            })
+        } catch (e) {
+            this.setState({
+                quotationAcceptedLoading: false,
+                error: {
+                    error: true,
+                    text: "Sorry!",
+                    description: "Something went wrong. Please try again later!"
+                }
+            })
+        }
+    }
+
     // filters change functions
     onChangeCity = (value) => {
         const updatedFilter = {
@@ -356,6 +470,13 @@ class ItemQuotations extends React.Component {
                             height: "100%",
                             width: "100%"
                         }}
+                        extra={
+                            this.state.itemDetails[0] && this.state.itemDetails[0].status === "NOT_ACTIVE" ? (
+                                <Text type="danger" strong>
+                                    ORDER CLOSED
+                                </Text>
+                            ) : undefined
+                        }
                     >
                         <Card title="Your Item Order Details" type="inner">
                             {this.state.itemDetailsLoading === true ? (
@@ -370,10 +491,64 @@ class ItemQuotations extends React.Component {
                                     }}
                                     columns={productColumns}
                                     dataSource={this.state.itemDetails}
+                                    pagination={false}
                                 />
                             )}
                         </Card>
-                        <Card title="Quotations Under Review" type="inner"></Card>
+                        <Card
+                            title="Finalized Quotation"
+                            type="inner"
+                            extra={
+                                <Button
+                                    onClick={this.getItemOrderAcceptedQuotation}
+                                    type={"primary"}
+                                    icon={<ReloadOutlined />}
+                                />
+                            }
+                        >
+                            {this.state.quotationAcceptedLoading === true ? (
+                                <div className="spinner-div">
+                                    <Spin indicator={<LoadingOutlined style={{ fontSize: 50 }} spin />} tip="Loading" />
+                                </div>
+                            ) : this.state.itemQuotationAccepted.length !== 0 ? (
+                                <Table
+                                    style={{
+                                        height: "100%",
+                                        width: "100%"
+                                    }}
+                                    columns={quotationsColumns}
+                                    dataSource={this.state.itemQuotationAccepted}
+                                    pagination={false}
+                                />
+                            ) : undefined}
+                        </Card>
+                        <Card
+                            title="Quotations Under Review"
+                            type="inner"
+                            extra={
+                                <Button
+                                    onClick={this.getItemOrderQuotationsUnderReview}
+                                    type={"primary"}
+                                    icon={<ReloadOutlined />}
+                                />
+                            }
+                        >
+                            {this.state.quotationsUnderReviewLoading === true ? (
+                                <div className="spinner-div">
+                                    <Spin indicator={<LoadingOutlined style={{ fontSize: 50 }} spin />} tip="Loading" />
+                                </div>
+                            ) : this.state.itemQuotationsUnderReview.length !== 0 ? (
+                                <Table
+                                    style={{
+                                        height: "100%",
+                                        width: "100%"
+                                    }}
+                                    columns={quotationsColumns}
+                                    dataSource={this.state.itemQuotationsUnderReview}
+                                    pagination={false}
+                                />
+                            ) : undefined}
+                        </Card>
                         <Card
                             title="Search Quotations"
                             type="inner"
@@ -459,6 +634,7 @@ class ItemQuotations extends React.Component {
                                     }}
                                     columns={quotationsColumns}
                                     dataSource={this.state.itemQuotations}
+                                    pagination={false}
                                 />
                             )}
                         </Card>

@@ -40,6 +40,7 @@ class CreateProfile extends React.Component {
     }
 
     createProfile = async (values) => {
+        console.log(values, "adad")
         //if loading is true then return
         if (this.state.loading === true) {
             return
@@ -55,8 +56,8 @@ class CreateProfile extends React.Component {
 
         //generating variables
         const variables = {
-            ...values,
-            ...createProfileDefaultValues
+            ...createProfileDefaultValues,
+            ...values
         }
 
         console.log(variables, "req vars")

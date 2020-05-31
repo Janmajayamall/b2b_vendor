@@ -1,4 +1,4 @@
-export const constants = {
+module.exports.constants = {
     tableLimits: {
         vendors: {
             name: 500,
@@ -12,6 +12,16 @@ export const constants = {
         emailDoesNotExists: "2",
         noError: "0",
         invalidCreds: "3",
+        profileAlreadyCreated: "4",
+        recordNotFound: "5",
+        finalizedQuotationExists: "6",
+        orderItemClosed: "7",
+        orderItemDoesNotExists: "8",
         unknownError: "1000"
+    },
+    esEvents: {
+        create: "CREATE",
+        update: "UPDATE",
+        delete: "DELETE"
     }
 }

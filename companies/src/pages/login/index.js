@@ -66,6 +66,7 @@ class Login extends React.Component {
             //check if profile exists & route accordingly
             if (loginCompany.profileCreated === false) {
                 //route to create Profile page
+                this.props.router.push("/profile/createProfile")
             } else {
                 //route to home page
             }

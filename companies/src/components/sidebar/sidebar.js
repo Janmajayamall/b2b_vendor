@@ -46,6 +46,14 @@ class SideBar extends React.PureComponent {
                     >
                         View Sellers
                     </Menu.Item>
+                    <Menu.Item
+                        onClick={() => {
+                            this.props.router.push("/preferences")
+                        }}
+                        key="3"
+                    >
+                        Preferences
+                    </Menu.Item>
                 </Menu>
                 <style jsx>{`
                     .sidebar {

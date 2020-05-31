@@ -13,6 +13,10 @@ const defaultErrorState = {
 
 const columns = [
     {
+        title: "Order ID",
+        dataIndex: "_id"
+    },
+    {
         title: "RFQ ID",
         dataIndex: "buyerRfqId"
     },

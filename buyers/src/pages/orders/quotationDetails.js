@@ -1,12 +1,20 @@
 import React from "react"
-import { Table, Alert, Card, Button, Divider, Select, Typography, Checkbox, Spin, Space } from "antd"
+import { Table, Alert, Card, Button, Divider, Select, Typography, Checkbox, Spin, Modal } from "antd"
 import { withRouter } from "next/router"
-import { BUYER_GET_ITEM_DETAILS, GET_QUOTATION_DETAILS } from "../../graphql/apolloQueries/index"
+import {
+    BUYER_GET_ITEM_DETAILS,
+    GET_QUOTATION_DETAILS,
+    BUYER_MARK_UNDER_REVIEW_QUOTATION,
+    BUYER_UNMARK_UNDER_REVIEW_QUOTATION,
+    BUYER_FINALIZE_QUOTATION
+} from "../../graphql/apolloQueries/index"
 import { withApollo } from "react-apollo"
 import Link from "next/link"
-import { LoadingOutlined } from "@ant-design/icons"
+import { LoadingOutlined, ReloadOutlined, ExclamationCircleOutlined } from "@ant-design/icons"
+import { constants } from "./../../utils/index"
 const { Text } = Typography
 const { Option } = Select
+const { confirm } = Modal
 
 const defaultErrorState = {
     error: false,
@@ -132,6 +140,10 @@ class QuotationDetails extends React.Component {
             //loading states
             itemDetailsLoading: true,
             quotationDetailsLoading: true,
+            //button loadin states
+            changeToReviewLoading: false,
+            changeToQuotedLoading: false,
+            finalizeQuotationLoading: false,
 
             error: defaultErrorState
         }
@@ -199,6 +211,12 @@ class QuotationDetails extends React.Component {
             return
         }
 
+        //set quotationDetailsLoading to true
+        this.setState({
+            quotationDetailsLoading: true,
+            error: defaultErrorState
+        })
+
         try {
             const { data } = await this.props.client.query({
                 query: GET_QUOTATION_DETAILS,
@@ -225,22 +243,176 @@ class QuotationDetails extends React.Component {
         }
     }
 
-    changeToUnderReview = () => {
+    changeToReview = async () => {
         const quotationId = this.state.quotationId
 
         if (quotationId == undefined) {
             return
         }
 
-        //TODO: short list
+        if (
+            this.state.changeToQuotedLoading === true ||
+            this.state.changeToReviewLoading === true ||
+            this.state.finalizeQuotationLoading === true
+        ) {
+            return
+        }
+
+        //set changeToReviewLoading to true
+        this.setState({
+            changeToReviewLoading: true,
+            error: defaultErrorState
+        })
+
+        try {
+            const { data } = await this.props.client.mutate({
+                mutation: BUYER_MARK_UNDER_REVIEW_QUOTATION,
+                variables: {
+                    quotationId: quotationId
+                }
+            })
+
+            const { buyerMarkUnderReviewQuotation } = data
+            if (buyerMarkUnderReviewQuotation.error === constants.errorCodes.noError) {
+                this.setState({
+                    changeToReviewLoading: false
+                })
+
+                this.getQuotationDetails()
+            } else {
+                throw new Error(`response - ${buyerMarkUnderReviewQuotation.error}`)
+            }
+        } catch (e) {
+            console.log("changeToReview quotationDetails.js with error: ", e)
+            this.setState({
+                changeToReviewLoading: false,
+                error: {
+                    error: true,
+                    text: "Error!",
+                    description: "Sorry something went wrong, please try again later!"
+                }
+            })
+        }
     }
 
-    finalizeQuotation = () => {
+    changeToQuoted = async () => {
         const quotationId = this.state.quotationId
 
         if (quotationId == undefined) {
             return
         }
+
+        if (
+            this.state.changeToQuotedLoading === true ||
+            this.state.changeToReviewLoading === true ||
+            this.state.finalizeQuotationLoading === true
+        ) {
+            return
+        }
+
+        //set changeToQuotedLoading to true
+        this.setState({
+            changeToQuotedLoading: true,
+            error: defaultErrorState
+        })
+
+        try {
+            const { data } = await this.props.client.mutate({
+                mutation: BUYER_UNMARK_UNDER_REVIEW_QUOTATION,
+                variables: {
+                    quotationId: quotationId
+                }
+            })
+            const { buyerUnmarkUnderReviewQuotation } = data
+            if (buyerUnmarkUnderReviewQuotation.error === constants.errorCodes.noError) {
+                this.setState({
+                    changeToQuotedLoading: false
+                })
+                this.getQuotationDetails()
+            } else {
+                throw new Error(`response - ${buyerUnmarkUnderReviewQuotation.error}`)
+            }
+        } catch (e) {
+            console.log("changeToQuoted quotationDetails.js with error: ", e)
+            this.setState({
+                changeToQuotedLoading: false,
+                error: {
+                    error: true,
+                    text: "Error!",
+                    description: "Sorry something went wrong, pleas try again later!"
+                }
+            })
+        }
+    }
+
+    finalizeQuotation = async () => {
+        const quotationId = this.state.quotationId
+        const orderId = this.state.orderId
+
+        if (quotationId == undefined || orderId == undefined) {
+            return
+        }
+
+        if (
+            this.state.changeToQuotedLoading === true ||
+            this.state.changeToReviewLoading === true ||
+            this.state.finalizeQuotationLoading === true
+        ) {
+            return
+        }
+
+        //set finalizeQuotationLoading to true
+        this.setState({
+            finalizeQuotationLoading: true,
+            error: defaultErrorState
+        })
+
+        try {
+            const { data } = await this.props.client.mutate({
+                mutation: BUYER_FINALIZE_QUOTATION,
+                variables: {
+                    quotationId: quotationId,
+                    orderId: orderId
+                }
+            })
+            const { buyerFinalizeQuotation } = data
+            if (buyerFinalizeQuotation.error === constants.errorCodes.noError) {
+                this.setState({
+                    finalizeQuotationLoading: false
+                })
+                this.getQuotationDetails()
+            } else {
+                throw new Error(`response - ${buyerFinalizeQuotation.error}`)
+            }
+        } catch (e) {
+            console.log("finalizedQuotation quotationDetails.js with error: ", e)
+            this.setState({
+                finalizeQuotationLoading: false,
+                error: {
+                    error: true,
+                    text: "Error!",
+                    description: "Sorry something went wrong, pleas try again later!"
+                }
+            })
+        }
+        return
+    }
+
+    finalizeQuotationConfirmation = async () => {
+        const parentThis = this
+        confirm({
+            title: "Finalize the quotation",
+            icon: <ExclamationCircleOutlined />,
+            content:
+                "Please note that after finalizing this quotation, rest of the quotations for the item order will be rejected & this Item order will be closed.",
+            onOk() {
+                return new Promise(async (resolve, reject) => {
+                    await parentThis.finalizeQuotation()
+                    resolve(true)
+                })
+            },
+            onCancel() {}
+        })
     }
 
     renderError = () => {
@@ -269,6 +441,19 @@ class QuotationDetails extends React.Component {
                             height: "100%",
                             width: "100%"
                         }}
+                        extra={
+                            this.state.quotationDetails[0] ? (
+                                this.state.quotationDetails[0].status === "REJECTED" ? (
+                                    <Text type="danger" strong>
+                                        QUOTATION REJECTED
+                                    </Text>
+                                ) : this.state.quotationDetails[0].status === "ACCEPTED" ? (
+                                    <Text type="secondary" strong>
+                                        QUOTATION FINALIZED
+                                    </Text>
+                                ) : undefined
+                            ) : undefined
+                        }
                     >
                         {this.state.error.error === true ? this.renderError() : undefined}
                         <Card title="Item Details" type="inner">
@@ -284,10 +469,17 @@ class QuotationDetails extends React.Component {
                                     }}
                                     columns={productColumns}
                                     dataSource={this.state.itemDetails}
+                                    pagination={false}
                                 />
                             )}
                         </Card>
-                        <Card title="Quotation" type="inner">
+                        <Card
+                            title="Quotation"
+                            type="inner"
+                            extra={
+                                <Button onClick={this.getQuotationDetails} type={"primary"} icon={<ReloadOutlined />} />
+                            }
+                        >
                             {this.state.quotationDetailsLoading === true ? (
                                 <div className="spinner-div">
                                     <Spin indicator={<LoadingOutlined style={{ fontSize: 50 }} spin />} tip="Loading" />
@@ -301,6 +493,7 @@ class QuotationDetails extends React.Component {
                                         }}
                                         columns={quotationItemColumn}
                                         dataSource={this.state.quotationDetails}
+                                        pagination={false}
                                     />
                                     <Table
                                         style={{
@@ -309,6 +502,7 @@ class QuotationDetails extends React.Component {
                                         }}
                                         columns={quotationCostColumn}
                                         dataSource={this.state.quotationDetails}
+                                        pagination={false}
                                     />
                                     <Table
                                         style={{
@@ -317,18 +511,39 @@ class QuotationDetails extends React.Component {
                                         }}
                                         columns={quotationCompanyColumn}
                                         dataSource={this.state.quotationDetails}
+                                        pagination={false}
                                     />
                                     <div className="bottom-buttons">
-                                        <Button
-                                            style={{ marginBottom: 10 }}
-                                            onClick={this.changeToUnderReview}
-                                            type={"primary"}
-                                        >
-                                            Mark this quotation
-                                        </Button>
-                                        <Button onClick={this.finalizeQuotation} type={"primary"}>
-                                            Finalize this quotation
-                                        </Button>
+                                        {this.state.quotationDetails[0].status === "QUOTED" ? (
+                                            <Button
+                                                style={{ marginBottom: 10 }}
+                                                onClick={this.changeToReview}
+                                                type={"primary"}
+                                                loading={this.state.changeToReviewLoading}
+                                            >
+                                                Mark quotation
+                                            </Button>
+                                        ) : undefined}
+                                        {this.state.quotationDetails[0].status === "REVIEW" ? (
+                                            <Button
+                                                style={{ marginBottom: 10 }}
+                                                onClick={this.changeToQuoted}
+                                                type={"primary"}
+                                                loading={this.state.changeToQuotedLoading}
+                                            >
+                                                Unmark quotation
+                                            </Button>
+                                        ) : undefined}
+                                        {this.state.quotationDetails[0].status === "QUOTED" ||
+                                        this.state.quotationDetails[0].status === "REVIEW" ? (
+                                            <Button
+                                                onClick={this.finalizeQuotationConfirmation}
+                                                type={"primary"}
+                                                loading={this.state.finalizeQuotationLoading}
+                                            >
+                                                Finalize quotation
+                                            </Button>
+                                        ) : undefined}
                                     </div>
                                 </div>
                             )}

@@ -13,13 +13,15 @@ import { setContext } from "apollo-link-context"
 global.fetch = fetch
 
 // cached storage for the user token
-let token = null
+// let token = null
 
 const withToken = setContext(async () => {
     // if you have a cached value, return it immediately
-    if (!token) {
-        token = getJwt()
-    }
+    // if (!token) {
+    //     token = getJwt()
+    // }
+
+    const token = getJwt()
 
     return {
         headers: {
