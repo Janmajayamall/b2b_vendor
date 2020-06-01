@@ -1,16 +1,19 @@
 import React from "react"
-import { Table, Button, Form, Input, InputNumber } from "antd"
+import { Table, Button, Form, Input, InputNumber, Upload } from "antd"
 import { withRouter } from "next/router"
 import { ADD_TEMP_ITEM } from "../../graphql/apolloQueries/index"
 import { withApollo } from "react-apollo"
-import { PlusOutlined, MinusOutlined } from "@ant-design/icons"
+import { PlusOutlined, MinusOutlined, UploadOutlined } from "@ant-design/icons"
 
 class Item extends React.Component {
     constructor(props) {
         super(props)
 
         this.state = {
-            tempItem: this.props.router.query
+            tempItem: this.props.router.query,
+
+            //uploaded file
+            itemFile: []
         }
     }
 
@@ -274,6 +277,24 @@ class Item extends React.Component {
                         >
                             <Input />
                         </Form.Item>
+
+                        <Upload
+                            onRemove={(f) => {
+                                this.setState({
+                                    itemFile: []
+                                })
+                            }}
+                            beforeUpload={(f) => {
+                                this.setState({
+                                    itemFile: [f]
+                                })
+                            }}
+                            fileList={this.state.itemFile}
+                        >
+                            <Button>
+                                <UploadOutlined /> Upload a file
+                            </Button>
+                        </Upload>
 
                         <Form.Item>
                             <Button type="primary" htmlType="submit">

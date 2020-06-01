@@ -2,9 +2,9 @@ import React from "react"
 import { withRouter } from "next/router"
 import { SEARCH_COMPANY_PROFILES, COMPANY_GET_PREFERRED_VENDORS } from "../../graphql/apolloQueries/index"
 import { withApollo } from "react-apollo"
-import { Card, Divider, Table, Input, Spin } from "antd"
+import { Card, Divider, Table, Input, Spin, Button } from "antd"
 import Link from "next/link"
-import { LoadingOutlined } from "@ant-design/icons"
+import { LoadingOutlined, ReloadOutlined } from "@ant-design/icons"
 const { Search } = Input
 
 const defaultErrorState = {
@@ -21,7 +21,7 @@ const vendorColumn = [
     {
         title: "Visit Profile",
         dataIndex: "operation",
-        width: 100,
+        width: 200,
         render: (_, item) => {
             return (
                 <Link
@@ -83,6 +83,10 @@ class PreferredVendors extends React.PureComponent {
         }
     }
 
+    componentDidMount() {
+        this.getPreferredVendors()
+    }
+
     getPreferredVendors = async () => {
         //set preferredVendorsLoading to true
         this.setState({
@@ -91,17 +95,20 @@ class PreferredVendors extends React.PureComponent {
         })
 
         try {
-            const { data } = this.props.client.query({
+            console.log("this is it")
+            const { data } = await this.props.client.query({
                 query: COMPANY_GET_PREFERRED_VENDORS,
                 fetchPolicy: "no-cache"
             })
             const { companyGetPreferredVendors } = data
+            console.log(data)
             this.setState({
                 preferredVendors: companyGetPreferredVendors,
                 preferredVendorsLoading: false,
                 preferredVendorsError: defaultErrorState
             })
         } catch (e) {
+            console.log("preferredVendors.js with error: ", e)
             this.setState({
                 preferredVendorsLoading: false,
                 preferredVendorsError: {
@@ -169,11 +176,7 @@ class PreferredVendors extends React.PureComponent {
                             height: "100%",
                             width: "100%"
                         }}
-                        // extra={
-                        //     <Link href="/buyerAccounts/addBuyerAccount">
-                        //         <a>Add new buyer</a>
-                        //     </Link>
-                        // }
+                        extra={<Button onClick={this.getPreferredVendors} type={"primary"} icon={<ReloadOutlined />} />}
                     >
                         {this.state.preferredVendorsLoading === true ? (
                             <div className="spinner-div">
@@ -187,7 +190,6 @@ class PreferredVendors extends React.PureComponent {
                                 }}
                                 columns={vendorColumn}
                                 dataSource={this.state.preferredVendors}
-                                pagination={false}
                             />
                         )}
                     </Card>

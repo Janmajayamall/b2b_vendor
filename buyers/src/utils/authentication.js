@@ -7,6 +7,6 @@ export const setJwt = (jwt) => {
 }
 
 export const getJwt = () => {
-    console.log(jwt, "dadad")
+    const jwt = cookie.get("buyerJwt")
     return jwt
 }
