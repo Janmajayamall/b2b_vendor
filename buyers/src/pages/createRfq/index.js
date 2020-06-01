@@ -1,11 +1,17 @@
 import React from "react"
-import { Table, Button, Select, Card, Upload } from "antd"
+import { Table, Button, Select, Card, Upload, notification } from "antd"
 import { withRouter } from "next/router"
 import { v4 as uuidv4 } from "uuid"
 import { withApollo } from "react-apollo"
-import { GET_TEMP_RFQ, CREATE_ITEM_ORDERS, BUYER_GET_PREFERRED_VENDORS } from "../../graphql/apolloQueries"
-import { RetryLink } from "apollo-link-retry"
+import {
+    GET_TEMP_RFQ,
+    CREATE_ITEM_ORDERS,
+    BUYER_GET_PREFERRED_VENDORS,
+    GET_SIGNED_URL_PUT_OBJECT
+} from "../../graphql/apolloQueries"
+import { constants } from "./../../utils/index"
 import { ReloadOutlined, UploadOutlined } from "@ant-design/icons"
+import axios from "axios"
 
 const defaultRFQ = {
     buyerRfqId: `rfqid:::${new Date()}`,
@@ -95,12 +101,15 @@ class CreateRfq extends React.PureComponent {
     }
 
     submitRfq = async () => {
-        if (this.state.rfqTable.length === 0) {
+        const rfqTable = this.state.rfqTable
+
+        if (rfqTable.length === 0) {
             return
         }
 
         //get final rfq
-        const finalRfq = this.rfqRefine()
+        const finalRfq = await this.rfqRefine(rfqTable)
+        console.log(finalRfq, "about to submit")
 
         //create item orders request
         try {
@@ -119,11 +128,19 @@ class CreateRfq extends React.PureComponent {
         }
     }
 
-    rfqRefine = () => {
+    rfqRefine = async (rfq) => {
         const finalRfq = []
-        this.state.rfqTable.forEach((item) => {
-            const newItem = {
-                ...item
+        for (let i = 0; i < rfq.length; i++) {
+            let newItem = {
+                ...rfq[i],
+                productFile: ""
+            }
+
+            //if image file exists
+            if (this.state.uploadedItemFiles[newItem.id] != undefined) {
+                const fileUploadName = await this.uploadItemFileToS3(this.state.uploadedItemFiles[newItem.id])
+                console.log(fileUploadName, "file name")
+                newItem.productFile = fileUploadName
             }
 
             //deleting unnecessary keys
@@ -131,11 +148,22 @@ class CreateRfq extends React.PureComponent {
             delete newItem.__typename
 
             finalRfq.push(newItem)
-        })
+        }
         return finalRfq
     }
 
-    uploadItemFile = (itemId, file) => {
+    openMaxFileSizeNotification = (fileName) => {
+        notification.warning({
+            message: `${fileName} size too big`
+        })
+    }
+
+    uploadItemFileLocal = (itemId, file) => {
+        if (file.size > constants.limits.maxFileSize) {
+            this.openMaxFileSizeNotification(file.name)
+            return
+        }
+
         let tempFiles = {
             ...this.state.uploadedItemFiles
         }
@@ -143,10 +171,9 @@ class CreateRfq extends React.PureComponent {
         this.setState({
             uploadedItemFiles: tempFiles
         })
-        console.log(tempFiles)
     }
 
-    removeItemFile = (itemId) => {
+    removeItemFileLocal = (itemId) => {
         let tempFiles = {
             ...this.state.uploadedItemFiles
         }
@@ -154,6 +181,39 @@ class CreateRfq extends React.PureComponent {
         this.setState({
             uploadedItemFiles: tempFiles
         })
+    }
+
+    getSignedUrlPutObject = async (fileName, fileMime) => {
+        const { data } = await this.props.client.query({
+            query: GET_SIGNED_URL_PUT_OBJECT,
+            variables: {
+                getSignedUrlPutObjectInput: {
+                    fileName: fileName,
+                    fileMime: fileMime
+                }
+            }
+        })
+        const { getSignedUrlPutObject } = data
+        return getSignedUrlPutObject
+    }
+
+    uploadItemFileToS3 = async (file) => {
+        try {
+            //getting signed url
+
+            //changing file name
+            //getting file extension
+            const fileNameSplit = file.name.split(".")
+            const fileExtension = fileNameSplit[fileNameSplit.length - 1]
+            const newFileName = `${uuidv4()}.${fileExtension}`
+
+            const signedUrl = await this.getSignedUrlPutObject(newFileName, file.type)
+            const response = await axios.put(signedUrl, file)
+            return newFileName
+        } catch (e) {
+            console.log("uploadItemFileS3 createRfq-index with error: ", e)
+            return ""
+        }
     }
 
     render() {
@@ -206,16 +266,17 @@ class CreateRfq extends React.PureComponent {
                     return (
                         <Upload
                             onRemove={(f) => {
-                                this.removeItemFile(item.id)
+                                this.removeItemFileLocal(item.id)
                             }}
                             beforeUpload={(file) => {
-                                this.uploadItemFile(item.id, file)
+                                this.uploadItemFileLocal(item.id, file)
                             }}
                             fileList={
                                 this.state.uploadedItemFiles[item.id] == undefined
                                     ? []
                                     : [this.state.uploadedItemFiles[item.id]]
                             }
+                            name={uuidv4()}
                         >
                             <Button>
                                 <UploadOutlined /> Upload a file

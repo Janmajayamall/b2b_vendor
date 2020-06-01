@@ -1,11 +1,12 @@
 module.exports.constants = {
-    tableLimits: {
+    limits: {
         vendors: {
             name: 500,
             address: 500,
             description: 3000,
             email: 200
-        }
+        },
+        maxFileSize: 10000000
     },
     errorCodes: {
         emailExists: "1",
