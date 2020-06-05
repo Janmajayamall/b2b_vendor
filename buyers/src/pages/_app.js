@@ -11,6 +11,7 @@ import SideBar from "./../components/sidebar/sidebar"
 
 function App({ Component, pageProps }) {
     const router = useRouter()
+    console.log(router.pathname, "router path name")
     return (
         <ApolloProvider client={apolloClient}>
             <Head>
@@ -25,7 +26,7 @@ function App({ Component, pageProps }) {
                 ) : (
                     <div className="main-page">
                         <div className="sidebar">
-                            <SideBar />
+                            <SideBar pathname={router.pathname} />
                         </div>
                         <div className="rest-page">
                             <Component {...pageProps} />

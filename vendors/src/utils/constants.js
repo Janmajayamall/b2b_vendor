@@ -14,5 +14,6 @@ export const constants = {
         invalidCreds: "3",
         recordNotFound: "5",
         unknownError: "1000"
-    }
+    },
+    B2B_BUCKET_S3_PUBLIC_URL: "https://b2b-vbc.s3.ap-south-1.amazonaws.com"
 }

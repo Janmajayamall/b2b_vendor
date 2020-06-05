@@ -2,12 +2,28 @@ import React from "react"
 import { Button, Menu } from "antd"
 import { withRouter } from "next/router"
 
+const defaultKeyRouteMap = {
+    "/createRfq": ["1"],
+    "/orders/activeOrders": ["2"],
+    "/orders/allOrders": ["3"]
+}
+
 class SideBar extends React.PureComponent {
     constructor(props) {
         super(props)
         this.state = {
             collapsed: false
         }
+    }
+
+    getDefaultKey = () => {
+        const pathname = this.props.pathname
+
+        if (defaultKeyRouteMap[pathname] != undefined) {
+            return defaultKeyRouteMap[pathname]
+        }
+
+        return []
     }
 
     toggleCollapsed = () => {
@@ -20,7 +36,7 @@ class SideBar extends React.PureComponent {
         return (
             <div className="sidebar">
                 <Menu
-                    defaultSelectedKeys={["1"]}
+                    defaultSelectedKeys={this.getDefaultKey()}
                     defaultOpenKeys={["sub1"]}
                     mode="inline"
                     style={{
@@ -36,15 +52,24 @@ class SideBar extends React.PureComponent {
                     >
                         Submit RFQ
                     </Menu.Item>
-                    <Menu.Item
-                        onClick={() => {
-                            this.props.router.push("/createRfq")
-                        }}
-                        key="2"
-                    >
-                        Option 2
-                    </Menu.Item>
-                    <Menu.Item key="3">Option 3</Menu.Item>
+                    <Menu.ItemGroup key="group1" title="Your Orders">
+                        <Menu.Item
+                            onClick={() => {
+                                this.props.router.push("/orders/activeOrders")
+                            }}
+                            key="2"
+                        >
+                            Active Orders
+                        </Menu.Item>
+                        <Menu.Item
+                            onClick={() => {
+                                this.props.router.push("/orders/allOrders")
+                            }}
+                            key="3"
+                        >
+                            All Orders
+                        </Menu.Item>
+                    </Menu.ItemGroup>
                 </Menu>
                 <style jsx>{`
                     .sidebar {

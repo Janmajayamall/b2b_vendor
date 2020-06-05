@@ -276,7 +276,6 @@ class CreateRfq extends React.PureComponent {
                                     ? []
                                     : [this.state.uploadedItemFiles[item.id]]
                             }
-                            name={uuidv4()}
                         >
                             <Button>
                                 <UploadOutlined /> Upload a file

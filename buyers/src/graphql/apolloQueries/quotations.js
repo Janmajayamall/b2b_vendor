@@ -49,6 +49,7 @@ export const GET_QUOTATION_DETAILS = gql`
             quotedValidity
             quotedDeliveryDays
             quotedTermsAndConditions
+            quotedProductFile
             status
 
             # vendor's company

@@ -26,9 +26,9 @@ export const GET_INCOMING_VENDOR_ORDERS = gql`
     }
 `
 
-export const GET_ITEM_ORDER_DETAILS = gql`
-    query getItemOrderDetails($orderId: ID!) {
-        getItemOrderDetails(orderId: $orderId) {
+export const GET_VENDOR_ORDER_DETAILS = gql`
+    query getVendorOrderDetails($orderId: ID!) {
+        getVendorOrderDetails(orderId: $orderId) {
             error
             itemOrder {
                 vendorId
@@ -41,6 +41,7 @@ export const GET_ITEM_ORDER_DETAILS = gql`
                 unit
                 termsAndConditions
                 productParameters
+                productFile
                 deliveryDays
                 buyerId
                 buyerName

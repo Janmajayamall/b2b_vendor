@@ -1,21 +1,89 @@
 import React from "react"
-import { Button, Form, Input, Alert, Card, Descriptions, Typography, Spin, InputNumber, Space, Divider } from "antd"
-import { LoadingOutlined, QuestionOutlined } from "@ant-design/icons"
+import {
+    Button,
+    Form,
+    Input,
+    Alert,
+    Card,
+    Descriptions,
+    Typography,
+    Spin,
+    InputNumber,
+    Divider,
+    Table,
+    Upload
+} from "antd"
+import { LoadingOutlined, UploadOutlined } from "@ant-design/icons"
 import { withRouter } from "next/router"
 import {
-    LOGIN_VENDOR,
-    GET_ITEM_ORDER_DETAILS,
+    GET_VENDOR_ORDER_DETAILS,
     REJECT_ITEM_ORDER,
-    UPDATE_VENDOR_ORDER_DETAILS
+    UPDATE_VENDOR_ORDER_DETAILS,
+    GET_SIGNED_URL_PUT_OBJECT
 } from "../../graphql/apolloQueries/index"
 import { withApollo } from "react-apollo"
 import { constants, setJwt } from "./../../utils/index"
+import { v4 as uuidv4 } from "uuid"
+import axios from "axios"
 
 const defaultErrorState = {
     error: false,
     text: "",
     description: ""
 }
+
+const buyerDetailsColumn = [
+    {
+        title: "Company Name",
+        dataIndex: "companyName"
+    },
+    {
+        title: "Contact Person Name",
+        dataIndex: "buyerName"
+    },
+    {
+        title: "City",
+        dataIndex: "companyCity"
+    },
+    {
+        title: "State",
+        dataIndex: "companyState"
+    },
+    {
+        title: "Country",
+        dataIndex: "companyCountry"
+    }
+]
+
+const buyerProductDetails = [
+    {
+        title: "Product Name",
+        dataIndex: "productName"
+    },
+    {
+        title: "Product Description",
+        dataIndex: "productDescription"
+    },
+    {
+        title: "Product Quantity",
+        dataIndex: "productQuantity"
+    },
+    {
+        title: "Product Delivery Time (expected) (in Days)",
+        dataIndex: "deliveryDays"
+    },
+    {
+        title: "Attached File",
+        dataIndex: "productFile",
+        render: (text, record) => {
+            if (record.productFile === "") {
+                return <div>No File</div>
+            } else {
+                return <a href={`${constants.B2B_BUCKET_S3_PUBLIC_URL}/${record.productFile}`}>Download</a>
+            }
+        }
+    }
+]
 
 class ItemOrderDetails extends React.Component {
     constructor(props) {
@@ -30,7 +98,9 @@ class ItemOrderDetails extends React.Component {
             error: defaultErrorState,
 
             orderItem: {},
-            quotation: {}
+            quotation: {},
+
+            uploadedQuotationFile: undefined
         }
     }
 
@@ -80,7 +150,7 @@ class ItemOrderDetails extends React.Component {
     }
 
     getItemOrderDetails = async () => {
-        const orderId = this.props.router.query.orderId
+        const orderId = this.props.query.orderId
         console.log(orderId)
         if (orderId === undefined) {
             this.setState({
@@ -98,33 +168,35 @@ class ItemOrderDetails extends React.Component {
 
         try {
             const { data } = await this.props.client.query({
-                query: GET_ITEM_ORDER_DETAILS,
+                query: GET_VENDOR_ORDER_DETAILS,
                 variables: {
                     orderId: orderId
                 },
                 fetchPolicy: "no-cache"
             })
-            const { getItemOrderDetails } = data
+            const { getVendorOrderDetails } = data
 
             //check for error
-            if (getItemOrderDetails.error !== constants.errorCodes.noError) {
-                this.setState({
-                    error: {
-                        error: true,
-                        text: "Sorry!",
-                        description: "Sorry something went wrong!"
-                    },
-                    loading: false,
-                    rejectLoading: false,
-                    submitLoading: false
-                })
+            if (getVendorOrderDetails.error !== constants.errorCodes.noError) {
+                // this.setState({
+                //     error: {
+                //         error: true,
+                //         text: "Sorry!",
+                //         description: "Sorry something went wrong!"
+                //     },
+                //     loading: false,
+                //     rejectLoading: false,
+                //     submitLoading: false
+                // })
+                // return
+                throw new Error(getVendorOrderDetails.error)
             }
 
             //getting quotation object
-            const quotation = getItemOrderDetails.itemOrder
+            const quotation = getVendorOrderDetails.itemOrder
 
             this.setState({
-                orderItem: getItemOrderDetails.itemOrder,
+                orderItem: getVendorOrderDetails.itemOrder,
                 quotation: quotation,
                 loading: false,
                 rejectLoading: false,
@@ -197,27 +269,28 @@ class ItemOrderDetails extends React.Component {
     renderItemOrderDetails = () => {
         return (
             <div>
-                <Descriptions
-                    style={{ marginBottom: 10 }}
-                    title={<Typography.Text strong={true}>Buyer Details</Typography.Text>}
-                    bordered
-                >
-                    <Descriptions.Item label="Company Name">{this.state.orderItem.companyName}</Descriptions.Item>
-                    <Descriptions.Item label="Contact Person Name">{this.state.orderItem.buyerName}</Descriptions.Item>
-                    <Descriptions.Item label="Company City">{this.state.orderItem.companyCity}</Descriptions.Item>
-                    <Descriptions.Item label="Company State">{this.state.orderItem.companyState}</Descriptions.Item>
-                    <Descriptions.Item label="Company Country">{this.state.orderItem.companyCountry}</Descriptions.Item>
-                </Descriptions>
-                <Descriptions title={<Typography.Text strong={true}>Product Details</Typography.Text>} bordered>
-                    <Descriptions.Item label="Product Name">{this.state.orderItem.productName}</Descriptions.Item>
-                    <Descriptions.Item label="Product Description">
-                        {this.state.orderItem.productDescription}
-                    </Descriptions.Item>
-                    {this.generateProductParametersDisplay(this.state.orderItem.productParameters)}
-                    <Descriptions.Item label="Product Quantity">{`${this.state.orderItem.quantity} ${this.state.orderItem.unit}`}</Descriptions.Item>
-                    <Descriptions.Item label="Deliver In (Days)">{`${this.state.orderItem.deliveryDays}`}</Descriptions.Item>
-                </Descriptions>
-                <Divider />
+                <Card title="Buyer Details" type="inner">
+                    <Table
+                        style={{
+                            height: "100%",
+                            width: "100%"
+                        }}
+                        columns={buyerDetailsColumn}
+                        dataSource={[this.state.orderItem]}
+                        pagination={false}
+                    />
+                </Card>
+                <Card title="Product Details" type="inner">
+                    <Table
+                        style={{
+                            height: "100%",
+                            width: "100%"
+                        }}
+                        columns={buyerProductDetails}
+                        dataSource={[this.state.orderItem]}
+                        pagination={false}
+                    />
+                </Card>
             </div>
         )
     }
@@ -383,6 +456,24 @@ class ItemOrderDetails extends React.Component {
                     <Input.TextArea autoSize={{ minRows: 3, maxRows: 5 }} />
                 </Form.Item>
 
+                <Upload
+                    onRemove={(file) => {
+                        this.setState({
+                            uploadedQuotationFile: undefined
+                        })
+                    }}
+                    beforeUpload={(file) => {
+                        this.setState({
+                            uploadedQuotationFile: file
+                        })
+                    }}
+                    fileList={this.state.uploadedQuotationFile == undefined ? [] : [this.state.uploadedQuotationFile]}
+                >
+                    <Button>
+                        <UploadOutlined /> Upload a file
+                    </Button>
+                </Upload>
+
                 <Form.Item>
                     <Button loading={this.state.submitLoading} type="primary" htmlType="submit">
                         Submit Quotation
@@ -429,7 +520,15 @@ class ItemOrderDetails extends React.Component {
         try {
             //generate vendor update input
             let updateVendorOrderDetails = {
-                ...values
+                ...values,
+                quotedProductFile: ""
+            }
+
+            //checking & uploading, if file is selected, file to s3
+            if (this.state.uploadedQuotationFile != undefined) {
+                const fileName = await this.uploadItemFileToS3(this.state.uploadedQuotationFile)
+                updateVendorOrderDetails.quotedProductFile = fileName
+                console.log(fileName, "file uploaded 2")
             }
 
             //generate product parameters
@@ -477,7 +576,8 @@ class ItemOrderDetails extends React.Component {
                         quotedPriceCurrency: updateVendorOrderDetails.quotedPriceCurrency,
                         quotedValidity: parseFloat(updateVendorOrderDetails.quotedValidity),
                         quotedDeliveryDays: updateVendorOrderDetails.quotedDeliveryDays,
-                        quotedTermsAndConditions: updateVendorOrderDetails.quotedTermsAndConditions
+                        quotedTermsAndConditions: updateVendorOrderDetails.quotedTermsAndConditions,
+                        quotedProductFile: updateVendorOrderDetails.quotedProductFile
                     }
                 }
             })
@@ -520,6 +620,39 @@ class ItemOrderDetails extends React.Component {
         }
     }
 
+    getSignedUrlPutObject = async (fileName, fileMime) => {
+        const { data } = await this.props.client.query({
+            query: GET_SIGNED_URL_PUT_OBJECT,
+            variables: {
+                getSignedUrlPutObjectInput: {
+                    fileName: fileName,
+                    fileMime: fileMime
+                }
+            }
+        })
+        const { getSignedUrlPutObject } = data
+        return getSignedUrlPutObject
+    }
+
+    uploadItemFileToS3 = async (file) => {
+        console.log(file, "this is the uploaded file")
+        try {
+            //changing file name
+            //getting file extension
+            const fileNameSplit = file.name.split(".")
+            const fileExtension = fileNameSplit[fileNameSplit.length - 1]
+            const newFileName = `${uuidv4()}.${fileExtension}`
+
+            const signedUrl = await this.getSignedUrlPutObject(newFileName, file.type)
+            const response = await axios.put(signedUrl, file)
+            console.log(response, "file uploaded")
+            return newFileName
+        } catch (e) {
+            console.log("uploadItemFileS3 createRfq-index with error: ", e)
+            return ""
+        }
+    }
+
     render() {
         if (this.state.loading === true) {
             return (
@@ -555,8 +688,12 @@ class ItemOrderDetails extends React.Component {
                     }
                 >
                     {this.state.error.error === true ? this.renderError() : undefined}
-                    {Object.keys(this.state.orderItem).length > 0 ? this.renderItemOrderDetails() : undefined}
-                    {Object.keys(this.state.quotation).length > 0 ? this.renderQuotationInput() : undefined}
+                    <Card type="inner">
+                        {Object.keys(this.state.orderItem).length > 0 ? this.renderItemOrderDetails() : undefined}
+                    </Card>
+                    <Card type="inner" title="Your Quotation">
+                        {Object.keys(this.state.quotation).length > 0 ? this.renderQuotationInput() : undefined}
+                    </Card>
                 </Card>
                 <style jsx>{`
                     .initial-page {
@@ -574,6 +711,16 @@ class ItemOrderDetails extends React.Component {
                 `}</style>
             </div>
         )
+    }
+}
+
+export async function getServerSideProps(content) {
+    const query = content.query
+
+    return {
+        props: {
+            query: query
+        }
     }
 }
 

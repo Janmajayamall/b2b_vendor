@@ -51,6 +51,17 @@ const productColumns = [
     {
         title: "Ordered Time",
         dataIndex: "createdAt"
+    },
+    {
+        title: "Attached File",
+        dataIndex: "productFile",
+        render: (text, record) => {
+            if (record.productFile === "") {
+                return <div>No File</div>
+            } else {
+                return <a href={`${constants.B2B_BUCKET_S3_PUBLIC_URL}/${record.productFile}`}>Download</a>
+            }
+        }
     }
 ]
 
@@ -79,6 +90,17 @@ const quotationItemColumn = [
     {
         title: "Delivery Days (in days)",
         dataIndex: "quotedDeliveryDays"
+    },
+    {
+        title: "Attached File",
+        dataIndex: "quotedProductFile",
+        render: (text, record) => {
+            if (record.quotedProductFile === "") {
+                return <div>No File</div>
+            } else {
+                return <a href={`${constants.B2B_BUCKET_S3_PUBLIC_URL}/${record.quotedProductFile}`}>Download</a>
+            }
+        }
     }
 ]
 
@@ -226,6 +248,7 @@ class QuotationDetails extends React.Component {
                 fetchPolicy: "no-cache"
             })
             const { getQuotationDetails } = data
+            console.log(getQuotationDetails, "add")
             this.setState({
                 quotationDetailsLoading: false,
                 quotationDetails: [getQuotationDetails]

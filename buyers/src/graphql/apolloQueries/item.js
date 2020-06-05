@@ -59,6 +59,31 @@ export const BUYER_GET_ITEM_DETAILS = gql`
             quantity
             unit
             termsAndConditions
+            productFile
+            deliveryDays
+            buyerGroupId
+            createdAt
+            lastModified
+            status
+        }
+    }
+`
+export const BUYER_SEARCH_ORDERS = gql`
+    query buyerSearchOrders($buyerSearchOrdersInput: buyerSearchOrdersInput!) {
+        buyerSearchOrders(userInput: $buyerSearchOrdersInput) {
+            _id
+            buyerId
+            buyerName
+            buyerRfqId
+            buyerPrId
+            buyerItemId
+            productName
+            productDescription
+            productParameters
+            quantity
+            unit
+            termsAndConditions
+            productFile
             deliveryDays
             buyerGroupId
             createdAt

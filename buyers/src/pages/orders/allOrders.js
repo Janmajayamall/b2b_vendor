@@ -1,9 +1,10 @@
 import React from "react"
-import { Table, Alert, Card, Button } from "antd"
+import { Table, Alert, Card, Button, Typography, Input } from "antd"
 import { withRouter } from "next/router"
-import { BUYER_GET_ACTIVE_ITEM_ORDERS } from "../../graphql/apolloQueries/index"
+import { BUYER_SEARCH_ORDERS } from "../../graphql/apolloQueries/index"
 import { withApollo } from "react-apollo"
 import Link from "next/link"
+const { Text } = Typography
 
 const defaultErrorState = {
     error: false,
@@ -61,6 +62,10 @@ const columns = [
         dataIndex: "createdAt"
     },
     {
+        title: "Status",
+        dataIndex: "status"
+    },
+    {
         title: "Action",
         key: "operation",
         fixed: "right",
@@ -75,7 +80,7 @@ const columns = [
     }
 ]
 
-class ActiveOrders extends React.Component {
+class AllOrders extends React.Component {
     constructor(props) {
         super(props)
 
@@ -87,7 +92,7 @@ class ActiveOrders extends React.Component {
     }
 
     componentDidMount() {
-        this.getActiveItemOrders()
+        this.searchItemOrders({})
     }
 
     renderError = () => {
@@ -106,7 +111,7 @@ class ActiveOrders extends React.Component {
         )
     }
 
-    getActiveItemOrders = async () => {
+    searchItemOrders = async (searchQuery) => {
         //if loading is true then return
         if (this.state.loading === true) {
             return
@@ -120,18 +125,22 @@ class ActiveOrders extends React.Component {
         try {
             //get active item orders
             const { data } = await this.props.client.query({
-                query: BUYER_GET_ACTIVE_ITEM_ORDERS
+                query: BUYER_SEARCH_ORDERS,
+                variables: {
+                    buyerSearchOrdersInput: searchQuery
+                },
+                fetchPolicy: "no-cache"
             })
-            const { buyerGetActiveItemOrders } = data
-            console.log(buyerGetActiveItemOrders)
+            const { buyerSearchOrders } = data
+            console.log(buyerSearchOrders)
             //set active orders in state
             this.setState({
                 loading: false,
                 error: defaultErrorState,
-                activeItemOrders: buyerGetActiveItemOrders
+                activeItemOrders: buyerSearchOrders
             })
         } catch (e) {
-            console.log("error in activeOrder.js: ", e)
+            console.log("error in allOrders.js: ", e)
             this.setState({
                 loading: false,
                 error: {
@@ -143,19 +152,53 @@ class ActiveOrders extends React.Component {
         }
     }
 
-    evaluateQuotations = (orderId) => {}
-
     render() {
         return (
             <div className="initial-page">
                 <div className="order-list">
                     <Card
-                        title="Active Item Orders"
+                        title="All Item Orders"
                         style={{
                             height: "100%",
                             width: "100%"
                         }}
                     >
+                        <Card title="Search Query" type="inner">
+                            <div className="search-frame">
+                                <div className="search-columns">
+                                    <div className="search-box">
+                                        <Text>Order ID</Text>
+                                        <Input />
+                                    </div>
+                                    <div className="search-box">
+                                        <Text>RFQ ID</Text>
+                                        <Input />
+                                    </div>
+                                    <div className="search-box">
+                                        <Text>PR ID</Text>
+                                        <Input />
+                                    </div>
+                                    <div className="search-box">
+                                        <Text>Item ID</Text>
+                                        <Input />
+                                    </div>
+                                </div>
+                                <div className="search-columns">
+                                    <div className="search-box">
+                                        <Text>Product Name</Text>
+                                        <Input />
+                                    </div>
+                                    <div className="search-box">
+                                        <Text>Status</Text>
+                                        <Input />
+                                    </div>
+                                    <div className="search-box">
+                                        <Text>Date Range</Text>
+                                        <Input />
+                                    </div>
+                                </div>
+                            </div>
+                        </Card>
                         <Table
                             style={{
                                 height: "100%",
@@ -178,10 +221,28 @@ class ActiveOrders extends React.Component {
                     .order-list {
                         width: 100%;
                     }
+
+                    .search-frame {
+                        width: 100%;
+                        display: flex;
+                        flex-direction: row;
+                    }
+
+                    .search-columns {
+                        width: 50%;
+                        display: flex;
+                        flex-direction: column;
+                    }
+
+                    .search-box {
+                        display: flex;
+                        flex-direction: column;
+                        width: 90%;
+                    }
                 `}</style>
             </div>
         )
     }
 }
 
-export default withRouter(withApollo(ActiveOrders))
+export default withRouter(withApollo(AllOrders))

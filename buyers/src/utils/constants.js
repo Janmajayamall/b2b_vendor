@@ -24,5 +24,6 @@ module.exports.constants = {
         create: "CREATE",
         update: "UPDATE",
         delete: "DELETE"
-    }
+    },
+    B2B_BUCKET_S3_PUBLIC_URL: "https://b2b-vbc.s3.ap-south-1.amazonaws.com"
 }
