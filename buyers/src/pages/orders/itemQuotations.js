@@ -1,17 +1,19 @@
 import React from "react"
-import { Table, Alert, Card, Button, Divider, Select, Typography, Checkbox, Spin } from "antd"
+import { Table, Alert, Card, Button, Divider, Select, Typography, Checkbox, Spin, Modal } from "antd"
 import { withRouter } from "next/router"
 import {
     BUYER_GET_ITEM_DETAILS,
     GET_ITEM_ORDER_QUOTATIONS,
     GET_ITEM_ORDER_QUOTATIONS_UNDER_REVIEW,
-    GET_ITEM_ORDER_ACCEPTED_QUOTATION
+    GET_ITEM_ORDER_ACCEPTED_QUOTATION,
+    CLOSE_ITEM_ORDER
 } from "../../graphql/apolloQueries/index"
 import { withApollo } from "react-apollo"
 import Link from "next/link"
-import { ReloadOutlined, LoadingOutlined } from "@ant-design/icons"
+import { ReloadOutlined, LoadingOutlined, ExclamationCircleOutlined } from "@ant-design/icons"
 const { Text } = Typography
 const { Option } = Select
+const { confirm } = Modal
 
 const defaultErrorState = {
     error: false,
@@ -180,6 +182,10 @@ class ItemQuotations extends React.Component {
             })
             return
         }
+
+        this.setState({
+            itemDetailsLoading: true
+        })
 
         try {
             //get item order details
@@ -356,11 +362,12 @@ class ItemQuotations extends React.Component {
                 query: GET_ITEM_ORDER_ACCEPTED_QUOTATION,
                 variables: {
                     orderId: orderId
-                }
+                },
+                fetchPolicy: "no-cache"
             })
             const { getItemOrderAcceptedQuotation } = data
             console.log(getItemOrderAcceptedQuotation, "getItemOrderAcceptedQuotation")
-            const acceptedQuotation = []
+            let acceptedQuotation = []
             if (getItemOrderAcceptedQuotation != undefined) {
                 acceptedQuotation = [getItemOrderAcceptedQuotation]
             }
@@ -370,6 +377,7 @@ class ItemQuotations extends React.Component {
                 quotationAcceptedLoading: false
             })
         } catch (e) {
+            console.log(e, "a")
             this.setState({
                 quotationAcceptedLoading: false,
                 error: {
@@ -457,6 +465,48 @@ class ItemQuotations extends React.Component {
                 }}
             />
         )
+    }
+
+    closeItemOrderRequest = async () => {
+        try {
+            const orderId = this.state.orderId
+            const { data } = await this.props.client.mutate({
+                mutation: CLOSE_ITEM_ORDER,
+                variables: {
+                    orderId: orderId
+                }
+            })
+            console.log(data)
+            this.getItemOrderDetails()
+            this.getItemOrderQuotations(this.state.filters, this.state.sorts)
+            this.getItemOrderQuotationsUnderReview()
+            this.getItemOrderAcceptedQuotation()
+        } catch (e) {
+            this.setState({
+                error: {
+                    error: true,
+                    text: "Sorry! Something went wrong",
+                    description: "Please refresh the page & try again!"
+                }
+            })
+        }
+    }
+
+    closeItemOrderConfirm = async () => {
+        const parentThis = this
+        confirm({
+            title: "Are you sure you want to close this order?",
+            icon: <ExclamationCircleOutlined />,
+            content:
+                "Please note that after closing this order, without finalizing & selecting any quotation, all quotations for the item order will be rejected.",
+            onOk() {
+                return new Promise(async (resolve, reject) => {
+                    await parentThis.closeItemOrderRequest()
+                    resolve(true)
+                })
+            },
+            onCancel() {}
+        })
     }
 
     render() {
@@ -638,6 +688,19 @@ class ItemQuotations extends React.Component {
                                 />
                             )}
                         </Card>
+                        {this.state.itemDetails[0] == undefined ? undefined : this.state.itemDetails[0].status ===
+                          "ACTIVE" ? (
+                            <Button
+                                onClick={this.closeItemOrderConfirm}
+                                style={{
+                                    margin: 20,
+                                    backgroundColor: "#ff0000",
+                                    color: "#ffffff"
+                                }}
+                            >
+                                Close Item Order
+                            </Button>
+                        ) : undefined}
                     </Card>
                 </div>
                 <style jsx>{`

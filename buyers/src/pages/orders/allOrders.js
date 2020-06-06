@@ -1,10 +1,12 @@
 import React from "react"
-import { Table, Alert, Card, Button, Typography, Input } from "antd"
+import { Table, Alert, Card, Button, Typography, Input, DatePicker, Select } from "antd"
 import { withRouter } from "next/router"
 import { BUYER_SEARCH_ORDERS } from "../../graphql/apolloQueries/index"
 import { withApollo } from "react-apollo"
 import Link from "next/link"
+import { SearchOutlined } from "@ant-design/icons"
 const { Text } = Typography
+const { RangePicker } = DatePicker
 
 const defaultErrorState = {
     error: false,
@@ -87,7 +89,9 @@ class AllOrders extends React.Component {
         this.state = {
             loading: false,
             error: defaultErrorState,
-            activeItemOrders: []
+            activeItemOrders: [],
+
+            searchQuery: {}
         }
     }
 
@@ -111,7 +115,88 @@ class AllOrders extends React.Component {
         )
     }
 
-    searchItemOrders = async (searchQuery) => {
+    onDateRangeChange = (dateRange) => {
+        if (dateRange == undefined) {
+            this.setState({
+                searchQuery: {
+                    ...this.state.searchQuery,
+                    dateRange: dateRange
+                }
+            })
+        } else {
+            this.setState({
+                searchQuery: {
+                    ...this.state.searchQuery,
+                    dateRange: {
+                        startDate: dateRange[0],
+                        endDate: dateRange[1]
+                    }
+                }
+            })
+        }
+    }
+
+    onOrderIdChange = (e) => {
+        this.setState({
+            searchQuery: {
+                ...this.state.searchQuery,
+                orderId: e.target.value.trim()
+            }
+        })
+    }
+
+    onRfqIdChange = (e) => {
+        this.setState({
+            searchQuery: {
+                ...this.state.searchQuery,
+                buyerRfqId: e.target.value.trim()
+            }
+        })
+    }
+
+    onPrIdChange = (e) => {
+        this.setState({
+            searchQuery: {
+                ...this.state.searchQuery,
+                buyerPrId: e.target.value.trim()
+            }
+        })
+    }
+
+    onItemIdChange = (e) => {
+        this.setState({
+            searchQuery: {
+                ...this.state.searchQuery,
+                buyerItemId: e.target.value.trim()
+            }
+        })
+    }
+
+    onProductNameChange = (e) => {
+        this.setState({
+            searchQuery: {
+                ...this.state.searchQuery,
+                productName: e.target.value.trim()
+            }
+        })
+    }
+
+    onStatusChange = (val) => {
+        this.setState({
+            searchQuery: {
+                ...this.state.searchQuery,
+                status: val
+            }
+        })
+    }
+
+    resetSearch = () => {
+        this.setState({
+            searchQuery: {}
+        })
+    }
+
+    searchItemOrders = async () => {
         //if loading is true then return
         if (this.state.loading === true) {
             return
@@ -121,6 +206,8 @@ class AllOrders extends React.Component {
         this.setState({
             loading: true
         })
+
+        const searchQuery = this.state.searchQuery
 
         try {
             //get active item orders
@@ -163,38 +250,86 @@ class AllOrders extends React.Component {
                             width: "100%"
                         }}
                     >
-                        <Card title="Search Query" type="inner">
+                        <Card
+                            title="Search Query"
+                            type="inner"
+                            extra={
+                                <div>
+                                    <Button
+                                        onClick={this.searchItemOrders}
+                                        type={"primary"}
+                                        icon={<SearchOutlined />}
+                                        loading={this.state.loading}
+                                        style={{
+                                            marginRight: 5
+                                        }}
+                                    >
+                                        Search
+                                    </Button>
+                                    <Button onClick={this.resetSearch} type={"primary"}>
+                                        Reset
+                                    </Button>
+                                </div>
+                            }
+                        >
                             <div className="search-frame">
                                 <div className="search-columns">
                                     <div className="search-box">
                                         <Text>Order ID</Text>
-                                        <Input />
+                                        <Input value={this.state.searchQuery.orderId} onChange={this.onOrderIdChange} />
                                     </div>
                                     <div className="search-box">
                                         <Text>RFQ ID</Text>
-                                        <Input />
+                                        <Input
+                                            value={this.state.searchQuery.buyerRfqId}
+                                            onChange={this.onRfqIdChange}
+                                        />
                                     </div>
                                     <div className="search-box">
                                         <Text>PR ID</Text>
-                                        <Input />
+                                        <Input value={this.state.searchQuery.buyerPrId} onChange={this.onPrIdChange} />
                                     </div>
                                     <div className="search-box">
                                         <Text>Item ID</Text>
-                                        <Input />
+                                        <Input
+                                            value={this.state.searchQuery.buyerItemId}
+                                            onChange={this.onItemIdChange}
+                                        />
                                     </div>
                                 </div>
                                 <div className="search-columns">
                                     <div className="search-box">
                                         <Text>Product Name</Text>
-                                        <Input />
+                                        <Input
+                                            value={this.state.searchQuery.productName}
+                                            onChange={this.onProductNameChange}
+                                        />
                                     </div>
                                     <div className="search-box">
                                         <Text>Status</Text>
-                                        <Input />
+                                        <Select
+                                            value={this.state.searchQuery.status}
+                                            defaultValue=""
+                                            onChange={this.onStatusChange}
+                                        >
+                                            <Select.Option value="">SELECT ALL</Select.Option>
+                                            <Select.Option value="ACTIVE">ACTIVE ORDERS</Select.Option>
+                                            <Select.Option value="NOT_ACTIVE">CLOSED ORDERS</Select.Option>
+                                        </Select>
                                     </div>
                                     <div className="search-box">
                                         <Text>Date Range</Text>
-                                        <Input />
+                                        <RangePicker
+                                            value={
+                                                this.state.searchQuery.dateRange == undefined
+                                                    ? null
+                                                    : [
+                                                          this.state.searchQuery.dateRange.startDate,
+                                                          this.state.searchQuery.dateRange.endDate
+                                                      ]
+                                            }
+                                            onChange={this.onDateRangeChange}
+                                        />
                                     </div>
                                 </div>
                             </div>

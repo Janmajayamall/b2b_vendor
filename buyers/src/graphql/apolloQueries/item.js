@@ -19,6 +19,12 @@ export const CREATE_ITEM_ORDERS = gql`
     }
 `
 
+export const CLOSE_ITEM_ORDER = gql`
+    mutation closeItemOrder($orderId: ID!) {
+        closeItemOrder(orderId: $orderId)
+    }
+`
+
 //queries
 export const BUYER_GET_ACTIVE_ITEM_ORDERS = gql`
     query buyerGetActiveItemOrders {
