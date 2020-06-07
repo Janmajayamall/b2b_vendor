@@ -67,6 +67,7 @@ export const GET_VENDOR_ORDER_DETAILS = gql`
                 quotedValidity
                 quotedDeliveryDays
                 quotedTermsAndConditions
+                quotedProductFile
                 status
 
                 # vendor's company
@@ -80,6 +81,32 @@ export const GET_VENDOR_ORDER_DETAILS = gql`
                 createdAt
                 lastModified
             }
+        }
+    }
+`
+
+export const VENDOR_SEARCH_ORDERS = gql`
+    query vendorSearchOrders($vendorSearchOrdersInput: vendorSearchOrdersInput!) {
+        vendorSearchOrders(userInput: $vendorSearchOrdersInput) {
+            vendorId
+            orderId
+
+            # buyer's input
+            productName
+            productDescription
+            quantity
+            unit
+            termsAndConditions
+            deliveryDays
+            buyerId
+            buyerName
+            companyId
+            companyName
+            companyCity
+            companyState
+            companyLocationCoordinates
+            companyCountry
+            status
         }
     }
 `

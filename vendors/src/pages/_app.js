@@ -25,7 +25,7 @@ function App({ Component, pageProps }) {
                 ) : (
                     <div className="main-page">
                         <div className="sidebar">
-                            <SideBar />
+                            <SideBar pathname={router.pathname} />
                         </div>
                         <div className="rest-page">
                             <Component {...pageProps} />
@@ -37,7 +37,7 @@ function App({ Component, pageProps }) {
             <style jsx>
                 {`
                     .sidebar {
-                        width: 10%;
+                        width: 15%;
                         height: 100%;
                     }
 

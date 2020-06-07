@@ -32,3 +32,8 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/deploym
 ## LINKING TO WHATSAPP
 
 https://faq.whatsapp.com/en/iphone/23559013
+
+## MAJOR THINGS LEFT
+
+1. Evaluation of vendors
+2. Attaching comments

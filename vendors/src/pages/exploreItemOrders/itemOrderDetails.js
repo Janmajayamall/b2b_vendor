@@ -13,7 +13,7 @@ import {
     Table,
     Upload
 } from "antd"
-import { LoadingOutlined, UploadOutlined } from "@ant-design/icons"
+import { LoadingOutlined, UploadOutlined, CloseCircleFilled } from "@ant-design/icons"
 import { withRouter } from "next/router"
 import {
     GET_VENDOR_ORDER_DETAILS,
@@ -25,6 +25,7 @@ import { withApollo } from "react-apollo"
 import { constants, setJwt } from "./../../utils/index"
 import { v4 as uuidv4 } from "uuid"
 import axios from "axios"
+const { Text } = Typography
 
 const defaultErrorState = {
     error: false,
@@ -56,6 +57,10 @@ const buyerDetailsColumn = [
 ]
 
 const buyerProductDetails = [
+    {
+        title: "Order Id",
+        dataIndex: "orderId"
+    },
     {
         title: "Product Name",
         dataIndex: "productName"
@@ -94,10 +99,10 @@ class ItemOrderDetails extends React.Component {
             loading: true,
             rejectLoading: false,
             submitLoading: false,
+            editMode: false,
 
             error: defaultErrorState,
 
-            orderItem: {},
             quotation: {},
 
             uploadedQuotationFile: undefined
@@ -109,7 +114,7 @@ class ItemOrderDetails extends React.Component {
     }
 
     rejectItemOrder = async () => {
-        if (this.state.orderItem.orderId === undefined) {
+        if (this.state.quotation.orderId === undefined) {
             return
         }
 
@@ -130,11 +135,16 @@ class ItemOrderDetails extends React.Component {
             const { data } = await this.props.client.mutate({
                 mutation: REJECT_ITEM_ORDER,
                 variables: {
-                    orderId: this.state.orderItem.orderId
+                    orderId: this.state.quotation.orderId
                 }
             })
 
-            this.props.router.push("/exploreItemOrders")
+            this.setState({
+                rejectLoading: false
+            })
+
+            this.getItemOrderDetails()
+            // this.props.router.push("/exploreItemOrders")
         } catch (e) {
             this.setState({
                 loading: false,
@@ -166,6 +176,13 @@ class ItemOrderDetails extends React.Component {
             return
         }
 
+        this.setState({
+            loading: true,
+            submitLoading: false,
+            rejectLoading: false,
+            error: defaultErrorState
+        })
+
         try {
             const { data } = await this.props.client.query({
                 query: GET_VENDOR_ORDER_DETAILS,
@@ -194,9 +211,9 @@ class ItemOrderDetails extends React.Component {
 
             //getting quotation object
             const quotation = getVendorOrderDetails.itemOrder
+            console.log(quotation)
 
             this.setState({
-                orderItem: getVendorOrderDetails.itemOrder,
                 quotation: quotation,
                 loading: false,
                 rejectLoading: false,
@@ -266,6 +283,17 @@ class ItemOrderDetails extends React.Component {
         )
     }
 
+    removeAlreadyInPlaceFile = () => {
+        //TODO: remove the file from AWS
+        console.log
+        this.setState({
+            quotation: {
+                ...this.state.quotation,
+                quotedProductFile: ""
+            }
+        })
+    }
+
     renderItemOrderDetails = () => {
         return (
             <div>
@@ -276,7 +304,7 @@ class ItemOrderDetails extends React.Component {
                             width: "100%"
                         }}
                         columns={buyerDetailsColumn}
-                        dataSource={[this.state.orderItem]}
+                        dataSource={[this.state.quotation]}
                         pagination={false}
                     />
                 </Card>
@@ -287,7 +315,7 @@ class ItemOrderDetails extends React.Component {
                             width: "100%"
                         }}
                         columns={buyerProductDetails}
-                        dataSource={[this.state.orderItem]}
+                        dataSource={[this.state.quotation]}
                         pagination={false}
                     />
                 </Card>
@@ -456,31 +484,138 @@ class ItemOrderDetails extends React.Component {
                     <Input.TextArea autoSize={{ minRows: 3, maxRows: 5 }} />
                 </Form.Item>
 
-                <Upload
-                    onRemove={(file) => {
-                        this.setState({
-                            uploadedQuotationFile: undefined
-                        })
-                    }}
-                    beforeUpload={(file) => {
-                        this.setState({
-                            uploadedQuotationFile: file
-                        })
-                    }}
-                    fileList={this.state.uploadedQuotationFile == undefined ? [] : [this.state.uploadedQuotationFile]}
-                >
-                    <Button>
-                        <UploadOutlined /> Upload a file
-                    </Button>
-                </Upload>
+                {this.state.quotation.quotedProductFile !== "" ? (
+                    <div className="upload-box">
+                        <Text>Uploaded Files (1) : </Text>
+                        <a href={`${constants.B2B_BUCKET_S3_PUBLIC_URL}/${this.state.quotation.quotedProductFile}`}>
+                            Click to download
+                        </a>
+                        <Button
+                            style={{ marginLeft: 5 }}
+                            onClick={this.removeAlreadyInPlaceFile}
+                            icon={<CloseCircleFilled style={{ color: "#ff0000" }} />}
+                        />
+                    </div>
+                ) : (
+                    <div className="upload-box">
+                        <Upload
+                            onRemove={(file) => {
+                                this.setState({
+                                    uploadedQuotationFile: undefined
+                                })
+                            }}
+                            beforeUpload={(file) => {
+                                this.setState({
+                                    uploadedQuotationFile: file
+                                })
+                            }}
+                            fileList={
+                                this.state.uploadedQuotationFile == undefined ? [] : [this.state.uploadedQuotationFile]
+                            }
+                        >
+                            <Button>
+                                <UploadOutlined /> Upload a file
+                            </Button>
+                        </Upload>
+                    </div>
+                )}
 
                 <Form.Item>
-                    <Button loading={this.state.submitLoading} type="primary" htmlType="submit">
+                    <Button
+                        style={{ marginRight: 20 }}
+                        loading={this.state.submitLoading}
+                        type="primary"
+                        htmlType="submit"
+                    >
                         Submit Quotation
+                    </Button>
+                    <Button
+                        onClick={() => {
+                            this.setState({
+                                editMode: false
+                            })
+                            this.getItemOrderDetails()
+                        }}
+                        type="primary"
+                    >
+                        Cancel
                     </Button>
                 </Form.Item>
             </Form>
         )
+    }
+
+    renderQuotationTable = () => {
+        const columns = [
+            {
+                title: "Product Name",
+                dataIndex: "quotedProductName"
+            },
+            {
+                title: "Product Description",
+                dataIndex: "quotedProductDescription"
+            },
+
+            {
+                title: "Quantity",
+                dataIndex: "quantity",
+                render: (_, item) => <div>{`${item.quotedQuantity} ${item.quotedUnit}`}</div>
+            },
+            {
+                title: "Price Per Unit",
+                dataIndex: "quotedPricePerUnit"
+            },
+            {
+                title: "Total Price",
+                dataIndex: "quotedQuantityPrice"
+            },
+            {
+                title: "Discount",
+                dataIndex: "quotedDiscount"
+            },
+            {
+                title: "Delivery Cost",
+                dataIndex: "quotedDeliveryCost"
+            },
+            {
+                title: "Landing Price",
+                dataIndex: "quotedLandingPrice"
+            },
+            {
+                title: "Validity",
+                dataIndex: "quotedValidity"
+            },
+            {
+                title: "Delivery Time (in Days)",
+                dataIndex: "quotedDeliveryDays"
+            },
+            {
+                title: "Terms and conditions",
+                dataIndex: "quotedTermsAndConditions"
+            },
+            {
+                title: "Attached file",
+                dataIndex: "quotedProductFile"
+            },
+            {
+                title: "Status",
+                dataIndex: "status",
+                render: (_, item) => {
+                    if (item.status === "REVIEW" || item.status === "QUOTED") {
+                        return <div>UNDER PROGRESS</div>
+                    } else if (item.status === "REJECTED") {
+                        return <div>REJECTED</div>
+                    } else if (item.status === "CANCELLED") {
+                        return <div>CANCELLED</div>
+                    } else if (item.status === "ACCEPTED") {
+                        return <div>ACCEPTED</div>
+                    }
+                    return undefined
+                }
+            }
+        ]
+
+        return <Table columns={columns} dataSource={[this.state.quotation]} />
     }
 
     renderError = () => {
@@ -500,7 +635,7 @@ class ItemOrderDetails extends React.Component {
     }
 
     submitVendorOrderDetails = async (values) => {
-        if (Object.keys(this.state.orderItem).length === 0) {
+        if (Object.keys(this.state.quotation).length === 0) {
             return
         }
 
@@ -521,7 +656,7 @@ class ItemOrderDetails extends React.Component {
             //generate vendor update input
             let updateVendorOrderDetails = {
                 ...values,
-                quotedProductFile: ""
+                quotedProductFile: this.state.quotation.quotedProductFile
             }
 
             //checking & uploading, if file is selected, file to s3
@@ -532,10 +667,10 @@ class ItemOrderDetails extends React.Component {
             }
 
             //generate product parameters
-            if (Object.keys(JSON.parse(this.state.orderItem.quotedProductParameters)).length === 0) {
-                updateVendorOrderDetails.quotedProductParameters = this.state.orderItem.quotedProductParameters
+            if (Object.keys(JSON.parse(this.state.quotation.quotedProductParameters)).length === 0) {
+                updateVendorOrderDetails.quotedProductParameters = this.state.quotation.quotedProductParameters
             } else {
-                const buyerProductParameters = JSON.parse(this.state.orderItem.quotedProductParameters)
+                const buyerProductParameters = JSON.parse(this.state.quotation.quotedProductParameters)
                 let vendorProductParameters = {}
                 let errorFlag = false
                 Object.keys(buyerProductParameters).forEach((key) => {
@@ -561,7 +696,7 @@ class ItemOrderDetails extends React.Component {
             const { data } = await this.props.client.mutate({
                 mutation: UPDATE_VENDOR_ORDER_DETAILS,
                 variables: {
-                    orderId: this.state.orderItem.orderId,
+                    orderId: this.state.quotation.orderId,
                     updateVendorOrderDetailsInput: {
                         quotedProductName: updateVendorOrderDetails.quotedProductName,
                         quotedProductDescription: updateVendorOrderDetails.quotedProductDescription,
@@ -584,17 +719,18 @@ class ItemOrderDetails extends React.Component {
 
             //check for error
             if (data.updateVendorOrderDetails.error !== constants.errorCodes.noError) {
-                this.setState({
-                    loading: false,
-                    submitLoading: false,
-                    rejectLoading: false,
-                    error: {
-                        error: true,
-                        text: "Sorry! Something went wrong!",
-                        description: "Please try again after sometime."
-                    }
-                })
-                return
+                // this.setState({
+                //     loading: false,
+                //     submitLoading: false,
+                //     rejectLoading: false,
+                //     error: {
+                //         error: true,
+                //         text: "Sorry! Something went wrong!",
+                //         description: "Please try again after sometime."
+                //     }
+                // })
+                // return
+                throw new Error("Error with response: ", data.updateVendorOrderDetails.error)
             }
 
             //TODO: inform user that the quote has been submitted
@@ -602,6 +738,7 @@ class ItemOrderDetails extends React.Component {
                 loading: false,
                 submitLoading: false,
                 rejectLoading: false,
+                editMode: false,
                 error: defaultErrorState
             })
 
@@ -689,10 +826,40 @@ class ItemOrderDetails extends React.Component {
                 >
                     {this.state.error.error === true ? this.renderError() : undefined}
                     <Card type="inner">
-                        {Object.keys(this.state.orderItem).length > 0 ? this.renderItemOrderDetails() : undefined}
+                        {Object.keys(this.state.quotation).length > 0 ? this.renderItemOrderDetails() : undefined}
                     </Card>
-                    <Card type="inner" title="Your Quotation">
-                        {Object.keys(this.state.quotation).length > 0 ? this.renderQuotationInput() : undefined}
+                    <Card
+                        type="inner"
+                        title="Your Quotation"
+                        extra={
+                            Object.keys(this.state.quotation).length > 0 ? (
+                                this.state.quotation.status === "WAITING" ||
+                                this.state.quotation.status === "CANCELLED" ||
+                                this.state.quotation.status === "ACCEPTED" ? undefined : this.state.editMode ===
+                                  false ? (
+                                    <Button
+                                        onClick={() => {
+                                            this.setState({
+                                                editMode: true
+                                            })
+                                        }}
+                                        type={"primary"}
+                                    >
+                                        Edit
+                                    </Button>
+                                ) : undefined
+                            ) : undefined
+                        }
+                    >
+                        {Object.keys(this.state.quotation).length > 0 ? (
+                            this.state.quotation === "CANCELLED" ? (
+                                <Text>You have cancelled the quotation for this order. You can no longer quote</Text>
+                            ) : this.state.quotation.status === "WAITING" || this.state.editMode === true ? (
+                                this.renderQuotationInput()
+                            ) : (
+                                this.renderQuotationTable()
+                            )
+                        ) : undefined}
                     </Card>
                 </Card>
                 <style jsx>{`
@@ -707,6 +874,10 @@ class ItemOrderDetails extends React.Component {
                     .product-parameter-div {
                         display: flex;
                         flex-direction: row;
+                    }
+
+                    .upload-box {
+                        margin-bottom: 20px;
                     }
                 `}</style>
             </div>

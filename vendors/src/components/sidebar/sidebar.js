@@ -2,12 +2,27 @@ import React from "react"
 import { Button, Menu } from "antd"
 import { withRouter } from "next/router"
 
+const defaultKeyRouteMap = {
+    "/exploreItemOrders": ["1"],
+    "/exploreItemOrders/quotedQuotations": ["2"]
+}
+
 class SideBar extends React.PureComponent {
     constructor(props) {
         super(props)
         this.state = {
             collapsed: false
         }
+    }
+
+    getDefaultKey = () => {
+        const pathname = this.props.pathname
+        console.log(pathname)
+        if (defaultKeyRouteMap[pathname] != undefined) {
+            return defaultKeyRouteMap[pathname]
+        }
+
+        return []
     }
 
     toggleCollapsed = () => {
@@ -20,7 +35,7 @@ class SideBar extends React.PureComponent {
         return (
             <div className="sidebar">
                 <Menu
-                    defaultSelectedKeys={["1"]}
+                    defaultSelectedKeys={this.getDefaultKey()}
                     defaultOpenKeys={["sub1"]}
                     mode="inline"
                     style={{
@@ -28,23 +43,24 @@ class SideBar extends React.PureComponent {
                     }}
                     inlineCollapsed={false}
                 >
-                    <Menu.Item
-                        onClick={() => {
-                            this.props.router.push("/createRfq")
-                        }}
-                        key="1"
-                    >
-                        Submit RFQ
-                    </Menu.Item>
-                    <Menu.Item
-                        onClick={() => {
-                            this.props.router.push("/createRfq")
-                        }}
-                        key="2"
-                    >
-                        Option 2
-                    </Menu.Item>
-                    <Menu.Item key="3">Option 3</Menu.Item>
+                    <Menu.ItemGroup key="group1" title="Quotations">
+                        <Menu.Item
+                            onClick={() => {
+                                this.props.router.push("/exploreItemOrders")
+                            }}
+                            key="1"
+                        >
+                            Incoming Quotations
+                        </Menu.Item>
+                        <Menu.Item
+                            onClick={() => {
+                                this.props.router.push("/exploreItemOrders/quotedQuotations")
+                            }}
+                            key="2"
+                        >
+                            Quoted Quotations
+                        </Menu.Item>
+                    </Menu.ItemGroup>
                 </Menu>
                 <style jsx>{`
                     .sidebar {
